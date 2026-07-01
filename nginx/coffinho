@@ -1,0 +1,25 @@
+server {
+    listen 80;
+    server_name coffinho.coffeetecnologia.com;
+
+    # Rotas admin bloqueadas publicamente — acessar só via rede interna
+    location /api/admin/ {
+        deny all;
+    }
+
+    location / {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # SSL — descomente após rodar: sudo certbot --nginx -d coffinho.coffeetecnologia.com
+    # listen 443 ssl;
+    # ssl_certificate     /etc/letsencrypt/live/coffinho.coffeetecnologia.com/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/coffinho.coffeetecnologia.com/privkey.pem;
+    # include /etc/letsencrypt/options-ssl-nginx.conf;
+    # ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+}

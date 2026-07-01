@@ -2,6 +2,7 @@ import pool from '../config/db.js';
 import type { ChatRole, ChatMessage } from './claude.service.js';
 
 export async function getOrCreateConversation(
+  appId: string,
   conversationId?: string,
   userId?: string,
 ): Promise<string> {
@@ -14,8 +15,8 @@ export async function getOrCreateConversation(
   }
 
   const result = await pool.query<{ id: string }>(
-    'INSERT INTO coffinho.conversations (user_id) VALUES ($1) RETURNING id',
-    [userId ?? null],
+    'INSERT INTO coffinho.conversations (user_id, app_id) VALUES ($1, $2) RETURNING id',
+    [userId ?? null, appId],
   );
   return result.rows[0].id;
 }

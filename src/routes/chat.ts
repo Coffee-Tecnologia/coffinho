@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { internalAuth } from '../middleware/internalAuth.js';
-import { loadDocs } from '../services/docs.service.js';
+import { loadDocs, validateId } from '../services/docs.service.js';
 import { askClaude, UNANSWERED_MARKER } from '../services/claude.service.js';
 import {
   getOrCreateConversation,
@@ -12,14 +12,14 @@ import { logUnansweredQuestion } from '../services/unanswered.service.js';
 
 const router = Router();
 
-const docs = loadDocs();
-
 router.post('/chat', internalAuth, async (req: Request, res: Response) => {
   const userId = req.internalUserId;
 
-  const { conversationId, message } = req.body as {
+  const { conversationId, message, appId, moduleId } = req.body as {
     conversationId?: string;
     message?: string;
+    appId?: string;
+    moduleId?: string;
   };
 
   if (!message || message.trim() === '') {
@@ -27,8 +27,23 @@ router.post('/chat', internalAuth, async (req: Request, res: Response) => {
     return;
   }
 
+  const appIdError = validateId(appId ?? '', 'appId');
+  if (appIdError) {
+    res.status(400).json({ error: appIdError });
+    return;
+  }
+
+  if (moduleId !== undefined && moduleId !== null) {
+    const moduleIdError = validateId(moduleId, 'moduleId');
+    if (moduleIdError) {
+      res.status(400).json({ error: moduleIdError });
+      return;
+    }
+  }
+
   try {
-    const convId = await getOrCreateConversation(conversationId, userId);
+    const docs = loadDocs(appId!, moduleId);
+    const convId = await getOrCreateConversation(appId!, conversationId, userId);
     const history = await getHistory(convId);
 
     const rawAnswer = await askClaude({ docs, history, question: message });
