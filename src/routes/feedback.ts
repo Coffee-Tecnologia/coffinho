@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
+import { internalAuth } from '../middleware/internalAuth.js';
 import { getMessageById, setMessageFeedback } from '../services/history.service.js';
 
 const router = Router();
 
-router.patch('/messages/:id/feedback', async (req: Request, res: Response) => {
+router.patch('/messages/:id/feedback', internalAuth, async (req: Request, res: Response) => {
   const { id } = req.params;
   const { value } = req.body as { value?: unknown };
 

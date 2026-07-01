@@ -1,0 +1,297 @@
+{
+  "info": {
+    "name": "Coffinho AI",
+    "description": "Coleção completa da API do Coffinho — assistente do sistema Apollo.\n\n**Auth:**\n- Chat e Feedback usam `x-internal-key` + `x-user-id` (comunicação interna Apollo → Coffinho)\n- Admin usa `x-admin-key`\n\n**Setup:** as variáveis `internalKey`, `userId` e `adminKey` já estão preenchidas com os valores de dev.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",      "value": "http://localhost:3001", "type": "string" },
+    { "key": "internalKey",  "value": "8619737e06e4acf87f85e33a59543cd11113ca07485b1f17", "type": "string" },
+    { "key": "adminKey",     "value": "c34962bce0c7d5891dd9a5cf37ea8623", "type": "string" },
+    { "key": "userId",       "value": "00000000-0000-0000-0000-000000000001", "type": "string", "description": "UUID do usuário (USER_UUID do token Apollo)" },
+    { "key": "conversationId", "value": "", "type": "string" },
+    { "key": "messageId",    "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('status 200', () => pm.response.to.have.status(200));",
+            "pm.test('status ok', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "item": [
+        {
+          "name": "POST /chat — nova conversa",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/chat",
+            "header": [
+              { "key": "Content-Type",   "value": "application/json" },
+              { "key": "x-internal-key", "value": "{{internalKey}}" },
+              { "key": "x-user-id",      "value": "{{userId}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Como sincronizar pedidos no Apollo?\"\n}"
+            },
+            "description": "Cria uma nova conversa. O `userId` vem do header `x-user-id`, injetado pelo Apollo. Salva `conversationId` e `messageId` automaticamente."
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('status 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "pm.test('tem conversationId', () => pm.expect(json.conversationId).to.be.a('string'));",
+            "pm.test('tem messageId', () => pm.expect(json.messageId).to.be.a('string'));",
+            "pm.test('answer sem marcacao interna', () => pm.expect(json.answer).to.not.include('[[SEM_RESPOSTA]]'));",
+            "pm.collectionVariables.set('conversationId', json.conversationId);",
+            "pm.collectionVariables.set('messageId', json.messageId);",
+            "console.log('conversationId:', json.conversationId);",
+            "console.log('messageId:', json.messageId);"
+          ]}}]
+        },
+        {
+          "name": "POST /chat — continuar conversa",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/chat",
+            "header": [
+              { "key": "Content-Type",   "value": "application/json" },
+              { "key": "x-internal-key", "value": "{{internalKey}}" },
+              { "key": "x-user-id",      "value": "{{userId}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"message\": \"E se o fiscal reprovar o pedido?\"\n}"
+            },
+            "description": "Continua a conversa. O Claude recebe o histórico do banco e deve referenciar a mensagem anterior."
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('status 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "pm.test('mesmo conversationId', () => pm.expect(json.conversationId).to.eql(pm.collectionVariables.get('conversationId')));",
+            "pm.test('answer sem marcacao interna', () => pm.expect(json.answer).to.not.include('[[SEM_RESPOSTA]]'));",
+            "pm.collectionVariables.set('messageId', json.messageId);"
+          ]}}]
+        },
+        {
+          "name": "POST /chat — fora do escopo (unanswered)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/chat",
+            "header": [
+              { "key": "Content-Type",   "value": "application/json" },
+              { "key": "x-internal-key", "value": "{{internalKey}}" },
+              { "key": "x-user-id",      "value": "{{userId}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"message\": \"Qual a política de férias da empresa?\"\n}" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('status 200', () => pm.response.to.have.status(200));",
+            "pm.test('sem marcacao na resposta', () => pm.expect(pm.response.json().answer).to.not.include('[[SEM_RESPOSTA]]'));"
+          ]}}]
+        },
+        {
+          "name": "POST /chat — erro: sem x-internal-key",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/chat",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"message\": \"teste\"\n}" },
+            "description": "Deve retornar 401."
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('status 401', () => pm.response.to.have.status(401));"
+          ]}}]
+        },
+        {
+          "name": "POST /chat — erro: message vazio",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/chat",
+            "header": [
+              { "key": "Content-Type",   "value": "application/json" },
+              { "key": "x-internal-key", "value": "{{internalKey}}" },
+              { "key": "x-user-id",      "value": "{{userId}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"message\": \"\"\n}" },
+            "description": "Deve retornar 400."
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('status 400', () => pm.response.to.have.status(400));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "Feedback",
+      "item": [
+        {
+          "name": "PATCH /messages/:id/feedback — positivo",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/messages/{{messageId}}/feedback",
+            "header": [
+              { "key": "Content-Type",   "value": "application/json" },
+              { "key": "x-internal-key", "value": "{{internalKey}}" },
+              { "key": "x-user-id",      "value": "{{userId}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"value\": 1\n}" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('status 200', () => pm.response.to.have.status(200));",
+            "pm.test('ok true', () => pm.expect(pm.response.json().ok).to.be.true);"
+          ]}}]
+        },
+        {
+          "name": "PATCH /messages/:id/feedback — negativo",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/messages/{{messageId}}/feedback",
+            "header": [
+              { "key": "Content-Type",   "value": "application/json" },
+              { "key": "x-internal-key", "value": "{{internalKey}}" },
+              { "key": "x-user-id",      "value": "{{userId}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"value\": -1\n}" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('status 200', () => pm.response.to.have.status(200));",
+            "pm.test('ok true', () => pm.expect(pm.response.json().ok).to.be.true);"
+          ]}}]
+        },
+        {
+          "name": "PATCH /messages/:id/feedback — erro: sem chave",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/messages/{{messageId}}/feedback",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"value\": 1\n}" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('status 401', () => pm.response.to.have.status(401));"
+          ]}}]
+        },
+        {
+          "name": "PATCH /messages/:id/feedback — erro: value inválido",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/messages/{{messageId}}/feedback",
+            "header": [
+              { "key": "Content-Type",   "value": "application/json" },
+              { "key": "x-internal-key", "value": "{{internalKey}}" },
+              { "key": "x-user-id",      "value": "{{userId}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"value\": 0\n}" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('status 400', () => pm.response.to.have.status(400));"
+          ]}}]
+        },
+        {
+          "name": "PATCH /messages/:id/feedback — erro: id inexistente",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/messages/00000000-0000-0000-0000-000000000000/feedback",
+            "header": [
+              { "key": "Content-Type",   "value": "application/json" },
+              { "key": "x-internal-key", "value": "{{internalKey}}" },
+              { "key": "x-user-id",      "value": "{{userId}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"value\": 1\n}" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('status 404', () => pm.response.to.have.status(404));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "GET /admin/stats — sem autenticação",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/stats" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('status 401', () => pm.response.to.have.status(401));"
+          ]}}]
+        },
+        {
+          "name": "GET /admin/stats — tudo",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/stats",
+            "header": [{ "key": "x-admin-key", "value": "{{adminKey}}" }]
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('status 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "pm.test('tem totalConversations', () => pm.expect(json.totalConversations).to.be.a('number'));",
+            "pm.test('tem unansweredRatePercent', () => pm.expect(json.unansweredRatePercent).to.be.a('number'));",
+            "console.log('Stats:', JSON.stringify(json, null, 2));"
+          ]}}]
+        },
+        {
+          "name": "GET /admin/stats — filtro passado (from=2026-01-01)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/admin/stats?from=2026-01-01", "query": [{ "key": "from", "value": "2026-01-01" }] },
+            "header": [{ "key": "x-admin-key", "value": "{{adminKey}}" }]
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('status 200', () => pm.response.to.have.status(200));"
+          ]}}]
+        },
+        {
+          "name": "GET /admin/stats — filtro futuro (from=2030-01-01)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/admin/stats?from=2030-01-01", "query": [{ "key": "from", "value": "2030-01-01" }] },
+            "header": [{ "key": "x-admin-key", "value": "{{adminKey}}" }]
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('status 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "pm.test('totalConversations = 0', () => pm.expect(json.totalConversations).to.eql(0));",
+            "pm.test('unansweredRatePercent = 0', () => pm.expect(json.unansweredRatePercent).to.eql(0));"
+          ]}}]
+        },
+        {
+          "name": "GET /admin/unanswered",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/admin/unanswered?limit=20&offset=0", "query": [{ "key": "limit", "value": "20" }, { "key": "offset", "value": "0" }] },
+            "header": [{ "key": "x-admin-key", "value": "{{adminKey}}" }]
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('status 200', () => pm.response.to.have.status(200));",
+            "pm.test('tem items', () => pm.expect(pm.response.json().items).to.be.an('array'));",
+            "console.log('Total unanswered:', pm.response.json().total);"
+          ]}}]
+        },
+        {
+          "name": "GET /admin/feedback/negative",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/admin/feedback/negative?limit=20&offset=0", "query": [{ "key": "limit", "value": "20" }, { "key": "offset", "value": "0" }] },
+            "header": [{ "key": "x-admin-key", "value": "{{adminKey}}" }]
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('status 200', () => pm.response.to.have.status(200));",
+            "console.log('Total negative:', pm.response.json().total);"
+          ]}}]
+        }
+      ]
+    }
+  ]
+}

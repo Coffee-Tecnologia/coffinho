@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
+import { internalAuth } from '../middleware/internalAuth.js';
 import { loadDocs } from '../services/docs.service.js';
 import { askClaude, UNANSWERED_MARKER } from '../services/claude.service.js';
 import {
@@ -13,10 +14,11 @@ const router = Router();
 
 const docs = loadDocs();
 
-router.post('/chat', async (req: Request, res: Response) => {
-  const { conversationId, userId, message } = req.body as {
+router.post('/chat', internalAuth, async (req: Request, res: Response) => {
+  const userId = req.internalUserId;
+
+  const { conversationId, message } = req.body as {
     conversationId?: string;
-    userId?: string;
     message?: string;
   };
 
