@@ -309,6 +309,31 @@ export async function getRecentConversations(
   };
 }
 
+export async function getConversationMessages(
+  conversationId: string,
+): Promise<Array<{ id: string; role: string; content: string; feedback: number | null; createdAt: Date }>> {
+  const result = await pool.query<{
+    id: string;
+    role: string;
+    content: string;
+    feedback: number | null;
+    created_at: Date;
+  }>(
+    `SELECT id, role, content, feedback, created_at
+     FROM coffinho.messages
+     WHERE conversation_id = $1
+     ORDER BY created_at ASC`,
+    [conversationId],
+  );
+  return result.rows.map((r) => ({
+    id: r.id,
+    role: r.role,
+    content: r.content,
+    feedback: r.feedback,
+    createdAt: r.created_at,
+  }));
+}
+
 export async function getNegativeFeedbackMessages(
   params: PaginatedParams,
 ): Promise<{

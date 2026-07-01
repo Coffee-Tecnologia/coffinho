@@ -607,6 +607,71 @@
     }
     #toast.show { opacity: 1; }
     #toast.err  { background: var(--red); }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    .modal-overlay[hidden] { display: none; }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: min(720px, 95vw);
+      max-height: 80vh;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-title { font-size: 15px; font-weight: 700; }
+    .modal-meta  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .modal-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 20px; line-height: 1; padding: 4px 6px;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+    .msg-bubble {
+      margin-bottom: 14px;
+      max-width: 88%;
+    }
+    .msg-bubble.user   { margin-left: auto; }
+    .msg-bubble.assistant { margin-right: auto; }
+    .msg-role {
+      font-size: 10px; font-weight: 700; letter-spacing: .05em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .msg-bubble.user .msg-role { text-align: right; }
+    .msg-content {
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .msg-bubble.user .msg-content {
+      background: var(--purple);
+      color: #fff;
+      border-bottom-right-radius: 3px;
+    }
+    .msg-bubble.assistant .msg-content {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 3px;
+    }
+    .msg-feedback { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .msg-time { font-size: 10px; color: var(--light); margin-top: 4px; }
+    .msg-bubble.user .msg-time { text-align: right; }
+    .modal-loading { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; }
   </style>
 </head>
 <body>
@@ -810,6 +875,22 @@
 </div>
 
 <div id="toast"></div>
+
+<!-- MODAL DE CONVERSA -->
+<div class="modal-overlay" id="conv-modal" hidden onclick="closeModal(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-title">Conversa</div>
+        <div class="modal-meta" id="modal-meta"></div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('conv-modal').hidden=true">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <div class="modal-loading">Carregando…</div>
+    </div>
+  </div>
+</div>
 
 <script>
   /* ── CONSTANTS ─────────────────────────────────────────────────────── */
@@ -1165,9 +1246,10 @@
         const sysColor = getCoColor(r.appId);
         const empresa  = r.companyName ? esc(r.companyName) : '<span style="color:var(--light)">—</span>';
         const usuario  = r.userLogin   ? esc(r.userLogin)   : (r.userId ? r.userId.slice(0,8) + '…' : '—');
+        const meta     = [r.companyName, r.userLogin].filter(Boolean).join(' · ') || r.id;
         return `
           <tr>
-            <td class="conv-id">${r.id.slice(0, 8)}…</td>
+            <td class="conv-id" style="cursor:pointer;color:var(--purple)" onclick="openConvModal('${r.id}','${esc(r.appId)}','${esc(meta)}')">${r.id.slice(0, 8)}…</td>
             <td>
               <span class="co-badge" style="background:${sysColor.bg};color:${sysColor.text}">
                 ${esc(r.appId.toUpperCase())}
@@ -1347,6 +1429,49 @@
     el.className = 'show' + (isError ? ' err' : '');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  /* ── MODAL DE CONVERSA ─────────────────────────────────────────────── */
+
+  function closeModal(e) {
+    if (e.target === document.getElementById('conv-modal')) {
+      document.getElementById('conv-modal').hidden = true;
+    }
+  }
+
+  async function openConvModal(convId, appId, meta) {
+    const modal = document.getElementById('conv-modal');
+    const body  = document.getElementById('modal-body');
+    document.getElementById('modal-title').textContent = `Conversa ${convId.slice(0,8)}…`;
+    document.getElementById('modal-meta').textContent  = `${appId.toUpperCase()} · ${meta}`;
+    body.innerHTML = '<div class="modal-loading">Carregando…</div>';
+    modal.hidden = false;
+
+    try {
+      const msgs = await apiFetch(`/api/admin/conversations/${convId}/messages`);
+      if (!msgs.length) {
+        body.innerHTML = '<div class="modal-loading">Sem mensagens.</div>';
+        return;
+      }
+
+      body.innerHTML = msgs.map(m => {
+        const fbIcon = m.feedback === 1 ? ' 👍' : m.feedback === -1 ? ' 👎' : '';
+        const dt = new Date(m.createdAt).toLocaleString('pt-BR', {
+          day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'
+        });
+        return `
+          <div class="msg-bubble ${m.role}">
+            <div class="msg-role">${m.role === 'user' ? 'Usuário' : 'Coffinho'}${fbIcon}</div>
+            <div class="msg-content">${esc(m.content)}</div>
+            <div class="msg-time">${dt}</div>
+          </div>
+        `;
+      }).join('');
+
+      body.scrollTop = body.scrollHeight;
+    } catch {
+      body.innerHTML = '<div class="modal-loading" style="color:var(--red)">Erro ao carregar.</div>';
+    }
   }
 </script>
 </body>
