@@ -18,11 +18,17 @@ interface OverviewStats {
   };
 }
 
-function buildDateConditions(from?: Date, to?: Date): { conditions: string[]; params: Date[] } {
+// tableAlias prefixes the column: 'm' → 'm.created_at >= $1'
+function buildDateConditions(
+  from?: Date,
+  to?: Date,
+  tableAlias?: string,
+): { conditions: string[]; params: Date[] } {
+  const col = tableAlias ? `${tableAlias}.created_at` : 'created_at';
   const conditions: string[] = [];
   const params: Date[] = [];
-  if (from) { params.push(from); conditions.push(`created_at >= $${params.length}`); }
-  if (to)   { params.push(to);   conditions.push(`created_at <= $${params.length}`); }
+  if (from) { params.push(from); conditions.push(`${col} >= $${params.length}`); }
+  if (to)   { params.push(to);   conditions.push(`${col} <= $${params.length}`); }
   return { conditions, params };
 }
 
@@ -30,7 +36,6 @@ export async function getOverviewStats(from?: Date, to?: Date): Promise<Overview
   const { conditions, params } = buildDateConditions(from, to);
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
-  // feedback query: base WHERE is "feedback IS NOT NULL", date conditions are ANDed on top
   const feedbackWhere =
     conditions.length
       ? `WHERE feedback IS NOT NULL AND ${conditions.join(' AND ')}`
@@ -89,6 +94,68 @@ export async function getOverviewStats(from?: Date, to?: Date): Promise<Overview
   };
 }
 
+export interface CompanyUsage { appId: string; questionCount: number; }
+export interface CompanySatisfaction {
+  appId: string; positive: number; negative: number; satisfactionRatePercent: number;
+}
+export interface CompanyStats { usage: CompanyUsage[]; satisfaction: CompanySatisfaction[]; }
+
+export async function getCompanyStats(from?: Date, to?: Date): Promise<CompanyStats> {
+  const { conditions, params } = buildDateConditions(from, to, 'm');
+
+  const msgWhere = conditions.length
+    ? `WHERE m.role = 'user' AND ${conditions.join(' AND ')}`
+    : `WHERE m.role = 'user'`;
+
+  const satWhere = conditions.length
+    ? `WHERE m.feedback IS NOT NULL AND ${conditions.join(' AND ')}`
+    : `WHERE m.feedback IS NOT NULL`;
+
+  const [usageRows, satRows] = await Promise.all([
+    pool.query<{ app_id: string; question_count: string }>(
+      `SELECT c.app_id, COUNT(m.id) AS question_count
+       FROM coffinho.conversations c
+       JOIN coffinho.messages m ON m.conversation_id = c.id
+       ${msgWhere}
+       GROUP BY c.app_id
+       ORDER BY question_count DESC`,
+      params,
+    ),
+    pool.query<{ app_id: string; positive: string; negative: string }>(
+      `SELECT c.app_id,
+         COUNT(*) FILTER (WHERE m.feedback = 1)  AS positive,
+         COUNT(*) FILTER (WHERE m.feedback = -1) AS negative
+       FROM coffinho.conversations c
+       JOIN coffinho.messages m ON m.conversation_id = c.id
+       ${satWhere}
+       GROUP BY c.app_id
+       ORDER BY positive DESC`,
+      params,
+    ),
+  ]);
+
+  const usage = usageRows.rows.map((r) => ({
+    appId: r.app_id,
+    questionCount: parseInt(r.question_count, 10),
+  }));
+
+  const satisfaction = satRows.rows
+    .map((r) => {
+      const pos   = parseInt(r.positive, 10);
+      const neg   = parseInt(r.negative, 10);
+      const total = pos + neg;
+      return {
+        appId: r.app_id,
+        positive: pos,
+        negative: neg,
+        satisfactionRatePercent: total > 0 ? Math.round((pos / total) * 1000) / 10 : 0,
+      };
+    })
+    .filter((r) => r.positive + r.negative > 0);
+
+  return { usage, satisfaction };
+}
+
 interface PaginatedParams extends DateRange {
   limit: number;
   offset: number;
@@ -125,6 +192,118 @@ export async function getUnansweredQuestions(
       conversationId: r.conversation_id,
       question: r.question,
       createdAt: r.created_at,
+    })),
+    total: parseInt(totalRow.rows[0].total, 10),
+  };
+}
+
+// Groups identical questions — shows freq + most-recent company
+export async function getUnansweredGrouped(
+  params: PaginatedParams,
+): Promise<{
+  items: Array<{ question: string; freq: number; appId: string | null; lastAsked: Date }>;
+  total: number;
+}> {
+  const { limit, offset, from, to } = params;
+  const { conditions, params: dateParams } = buildDateConditions(from, to, 'uq');
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const [totalRow, rows] = await Promise.all([
+    pool.query<{ total: string }>(
+      `SELECT COUNT(DISTINCT uq.question) AS total
+       FROM coffinho.unanswered_questions uq ${where}`,
+      dateParams,
+    ),
+    pool.query<{ question: string; freq: string; app_id: string | null; last_asked: Date }>(
+      `SELECT
+         uq.question,
+         COUNT(*)            AS freq,
+         MAX(c.app_id)       AS app_id,
+         MAX(uq.created_at)  AS last_asked
+       FROM coffinho.unanswered_questions uq
+       LEFT JOIN coffinho.conversations c ON uq.conversation_id = c.id
+       ${where}
+       GROUP BY uq.question
+       ORDER BY freq DESC, last_asked DESC
+       LIMIT $${dateParams.length + 1} OFFSET $${dateParams.length + 2}`,
+      [...dateParams, limit, offset],
+    ),
+  ]);
+
+  return {
+    items: rows.rows.map((r) => ({
+      question: r.question,
+      freq: parseInt(r.freq, 10),
+      appId: r.app_id,
+      lastAsked: r.last_asked,
+    })),
+    total: parseInt(totalRow.rows[0].total, 10),
+  };
+}
+
+export async function getRecentConversations(
+  params: PaginatedParams,
+): Promise<{
+  items: Array<{
+    id: string;
+    appId: string;
+    userId: string | null;
+    userLogin: string | null;
+    companyName: string | null;
+    messageCount: number;
+    createdAt: Date;
+    lastMessageAt: Date | null;
+  }>;
+  total: number;
+}> {
+  const { limit, offset, from, to } = params;
+  const { conditions, params: dateParams } = buildDateConditions(from, to, 'c');
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const [totalRow, rows] = await Promise.all([
+    pool.query<{ total: string }>(
+      `SELECT COUNT(*) AS total FROM coffinho.conversations c ${where}`,
+      dateParams,
+    ),
+    pool.query<{
+      id: string;
+      app_id: string;
+      user_id: string | null;
+      user_login: string | null;
+      company_name: string | null;
+      message_count: string;
+      created_at: Date;
+      last_message_at: Date | null;
+    }>(
+      `SELECT
+         c.id,
+         c.app_id,
+         c.user_id,
+         c.user_login,
+         c.company_name,
+         COUNT(m.id)         AS message_count,
+         c.created_at,
+         MAX(m.created_at)   AS last_message_at
+       FROM coffinho.conversations c
+       LEFT JOIN coffinho.messages m ON m.conversation_id = c.id
+       ${where}
+       GROUP BY c.id, c.app_id, c.user_id, c.user_login, c.company_name, c.created_at
+       ORDER BY COALESCE(MAX(m.created_at), c.created_at) DESC
+       LIMIT $${dateParams.length + 1} OFFSET $${dateParams.length + 2}`,
+      [...dateParams, limit, offset],
+    ),
+  ]);
+
+  return {
+    items: rows.rows.map((r) => ({
+      id: r.id,
+      appId: r.app_id,
+      userId: r.user_id,
+      userLogin: r.user_login,
+      companyName: r.company_name,
+      messageCount: parseInt(r.message_count, 10),
+      createdAt: r.created_at,
+      lastMessageAt: r.last_message_at,
     })),
     total: parseInt(totalRow.rows[0].total, 10),
   };

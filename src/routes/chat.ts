@@ -13,7 +13,9 @@ import { logUnansweredQuestion } from '../services/unanswered.service.js';
 const router = Router();
 
 router.post('/chat', internalAuth, async (req: Request, res: Response) => {
-  const userId = req.internalUserId;
+  const userId      = req.internalUserId;
+  const userLogin   = req.internalUserLogin;
+  const companyName = req.internalCompanyName;
 
   const { conversationId, message, appId, moduleId } = req.body as {
     conversationId?: string;
@@ -43,7 +45,7 @@ router.post('/chat', internalAuth, async (req: Request, res: Response) => {
 
   try {
     const docs = loadDocs(appId!, moduleId);
-    const convId = await getOrCreateConversation(appId!, conversationId, userId);
+    const convId = await getOrCreateConversation(appId!, conversationId, userId, userLogin, companyName);
     const history = await getHistory(convId);
 
     const rawAnswer = await askClaude({ docs, history, question: message });

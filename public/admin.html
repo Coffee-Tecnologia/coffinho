@@ -8,18 +8,34 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0f172a;
-      --surface:   #1e293b;
-      --surface2:  #273449;
-      --border:    #334155;
-      --accent:    #6d28d9;
-      --accent-h:  #7c3aed;
-      --text:      #e2e8f0;
-      --text-muted:#94a3b8;
-      --green:     #22c55e;
-      --red:       #ef4444;
-      --yellow:    #f59e0b;
-      --radius:    10px;
+      --bg:       #f1f5f9;
+      --surface:  #ffffff;
+      --border:   #e2e8f0;
+      --text:     #0f172a;
+      --muted:    #64748b;
+      --light:    #94a3b8;
+      --track:    #e2e8f0;
+      --hover:    #f8fafc;
+      --orange:   #f97316;
+      --blue:     #3b82f6;
+      --yellow:   #f59e0b;
+      --green:    #22c55e;
+      --red:      #ef4444;
+      --purple:   #7c3aed;
+      --shadow:   0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+      --radius:   12px;
+    }
+
+    html[data-theme="dark"] {
+      --bg:      #0f172a;
+      --surface: #1e293b;
+      --border:  #334155;
+      --text:    #e2e8f0;
+      --muted:   #94a3b8;
+      --light:   #64748b;
+      --track:   #334155;
+      --hover:   #273449;
+      --shadow:  0 1px 3px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.2);
     }
 
     body {
@@ -30,7 +46,8 @@
       min-height: 100vh;
     }
 
-    /* ── LOGIN ── */
+    /* ══ LOGIN ══════════════════════════════════════════════════════════════ */
+
     #login-screen {
       display: flex;
       align-items: center;
@@ -42,6 +59,7 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
+      box-shadow: var(--shadow);
       padding: 40px 36px;
       width: 100%;
       max-width: 380px;
@@ -51,43 +69,73 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 28px;
+      margin-bottom: 4px;
     }
 
-    .login-logo svg { flex-shrink: 0; }
+    .login-logo-text { font-size: 20px; font-weight: 700; }
+    .login-logo-text span { color: var(--purple); }
 
-    .login-logo-text { font-size: 20px; font-weight: 700; color: var(--text); }
-    .login-logo-text span { color: var(--accent-h); }
-
-    .login-subtitle {
+    .login-sub {
       font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 24px;
+      color: var(--muted);
+      margin-bottom: 26px;
     }
 
     label {
       display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: .05em;
+      letter-spacing: .06em;
+      color: var(--muted);
       margin-bottom: 6px;
     }
 
-    input[type="password"], input[type="date"], input[type="text"] {
+    /* THEME TOGGLE BTN */
+    .btn-icon {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 5px 9px;
+      line-height: 1;
+      transition: background .12s;
+    }
+    .btn-icon:hover { background: var(--bg); }
+
+    /* CONVERSATIONS TABLE */
+    .conv-table { width: 100%; border-collapse: collapse; }
+    .conv-table th {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--light);
+      padding: 10px 16px; text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .conv-table td { padding: 11px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .conv-table tr:last-child td { border-bottom: none; }
+    .conv-table tr:hover td { background: var(--hover); }
+    .conv-id   { font-family: monospace; font-size: 12px; color: var(--muted); }
+    .conv-user { font-family: monospace; font-size: 12px; color: var(--light); }
+    .conv-msgs { font-weight: 600; }
+    .conv-time { color: var(--light); font-size: 12px; white-space: nowrap; }
+
+    input[type="password"] {
       width: 100%;
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 8px;
       color: var(--text);
       font-size: 14px;
       padding: 10px 12px;
       outline: none;
-      transition: border-color .15s;
+      transition: border-color .15s, box-shadow .15s;
     }
-
-    input:focus { border-color: var(--accent-h); }
+    input[type="password"]:focus {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 3px rgba(124,58,237,.12);
+    }
 
     .btn {
       display: inline-flex;
@@ -95,398 +143,664 @@
       justify-content: center;
       gap: 6px;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
       font-size: 14px;
       font-weight: 600;
       padding: 10px 16px;
-      transition: opacity .15s, background .15s;
+      transition: all .15s;
     }
-
     .btn:disabled { opacity: .5; cursor: default; }
 
     .btn-primary {
-      background: var(--accent);
+      background: var(--purple);
       color: #fff;
       width: 100%;
-      margin-top: 20px;
+      margin-top: 18px;
       padding: 12px;
     }
-    .btn-primary:hover:not(:disabled) { background: var(--accent-h); }
+    .btn-primary:hover:not(:disabled) { background: #6d28d9; }
 
     .btn-ghost {
       background: transparent;
-      color: var(--text-muted);
-      font-size: 13px;
-      padding: 6px 10px;
-    }
-    .btn-ghost:hover { color: var(--text); background: var(--surface2); }
-
-    .btn-outline {
-      background: transparent;
       border: 1px solid var(--border);
-      color: var(--text-muted);
+      color: var(--muted);
+      font-size: 13px;
+      padding: 7px 12px;
     }
-    .btn-outline:hover { border-color: var(--accent-h); color: var(--text); }
-
-    .btn-sm { padding: 6px 12px; font-size: 13px; }
+    .btn-ghost:hover { background: var(--bg); color: var(--text); }
 
     .login-error {
-      margin-top: 12px;
+      margin-top: 10px;
       color: var(--red);
       font-size: 13px;
       text-align: center;
       min-height: 18px;
     }
 
-    /* ── DASHBOARD ── */
-    #dashboard-screen { display: none; min-height: 100vh; flex-direction: column; }
-    #dashboard-screen.visible { display: flex; }
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .65s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ══ DASHBOARD ══════════════════════════════════════════════════════════ */
+
+    #dashboard-screen { display: none; }
+    #dashboard-screen.visible { display: block; }
+
+    /* HEADER */
     header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 0 24px;
+      padding: 0 28px;
       height: 56px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 100;
     }
 
-    .header-logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 16px;
-      font-weight: 700;
-    }
-    .header-logo span { color: var(--accent-h); }
+    .h-left { display: flex; align-items: center; gap: 10px; }
 
-    main { flex: 1; padding: 24px; max-width: 1100px; width: 100%; margin: 0 auto; }
+    .h-title { font-size: 16px; font-weight: 700; color: var(--text); }
 
-    /* ── FILTROS ── */
-    .filters {
+    .h-right { display: flex; align-items: center; gap: 10px; }
+
+    /* PERIOD DROPDOWN */
+    .period-wrap { position: relative; }
+
+    .period-btn {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px 20px;
+      border-radius: 8px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 12px;
       display: flex;
-      align-items: flex-end;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin-bottom: 24px;
+      align-items: center;
+      gap: 6px;
+      transition: background .12s;
+    }
+    .period-btn:hover { background: var(--bg); }
+
+    .chevron {
+      font-size: 9px;
+      color: var(--light);
+      transition: transform .15s;
+    }
+    .period-btn.open .chevron { transform: rotate(180deg); }
+
+    .period-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.1);
+      min-width: 180px;
+      overflow: hidden;
+      z-index: 200;
     }
 
-    .filter-field { display: flex; flex-direction: column; gap: 6px; }
-    .filter-field input { width: 160px; }
+    .period-menu button {
+      background: none;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      display: block;
+      font-size: 13px;
+      padding: 10px 16px;
+      text-align: left;
+      width: 100%;
+      transition: background .1s;
+    }
+    .period-menu button:hover { background: var(--bg); }
+    .period-menu button.sel { font-weight: 700; color: var(--purple); }
 
-    .quick-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    /* MAIN */
+    main { padding: 24px 28px; max-width: 1200px; margin: 0 auto; }
 
-    /* ── STATS ── */
+    /* STAT CARDS */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 16px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
+
+    @media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 500px) { .stats-grid { grid-template-columns: 1fr; } }
 
     .stat-card {
       background: var(--surface);
       border: 1px solid var(--border);
+      border-top-width: 3px;
       border-radius: var(--radius);
+      box-shadow: var(--shadow);
       padding: 20px;
     }
 
-    .stat-label {
+    .stat-lbl {
       font-size: 12px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: .05em;
-      color: var(--text-muted);
+      color: var(--muted);
       margin-bottom: 8px;
     }
 
-    .stat-value {
-      font-size: 32px;
+    .stat-val {
+      font-size: 36px;
       font-weight: 700;
       line-height: 1;
+      color: var(--text);
+      margin-bottom: 8px;
     }
 
-    .stat-value.green { color: var(--green); }
-    .stat-value.red   { color: var(--red); }
-    .stat-value.yellow { color: var(--yellow); }
+    .stat-sub { font-size: 12px; color: var(--muted); }
 
-    .stat-sub {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 6px;
+    .pill {
+      display: inline-block;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 9px;
+    }
+    .pill-blue   { background: #dbeafe; color: #1e40af; }
+    .pill-yellow { background: #fef3c7; color: #92400e; }
+    .pill-green  { background: #dcfce7; color: #166534; }
+
+    /* COMPANY GRID */
+    .company-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 800px) { .company-grid { grid-template-columns: 1fr; } }
+
+    /* CARD */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
     }
 
-    /* ── TABS ── */
-    .tabs {
+    .card-head { padding: 20px 20px 0; }
+    .card-title { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+    .card-desc  { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+    .card-body  { padding: 0 20px 20px; }
+
+    /* BAR CHART */
+    .bar-row {
       display: flex;
-      gap: 4px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 16px;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
     }
+    .bar-row:last-child { margin-bottom: 0; }
+
+    .bar-lbl {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      text-align: right;
+      width: 140px;
+      flex-shrink: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bar-track {
+      flex: 1;
+      background: var(--track);
+      border-radius: 4px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: var(--orange);
+      border-radius: 4px;
+      transition: width .5s cubic-bezier(.4,0,.2,1);
+    }
+
+    .bar-count {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      width: 28px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* SAT TABLE */
+    .sat-table { width: 100%; border-collapse: collapse; }
+
+    .sat-table th {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--light);
+      padding: 0 0 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .sat-table th:last-child { text-align: right; }
+
+    .sat-table td { padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .sat-table tr:last-child td { border-bottom: none; }
+
+    .sat-co {
+      font-size: 12px;
+      font-weight: 600;
+      padding-right: 12px;
+      white-space: nowrap;
+    }
+
+    .sat-bar-wrap { display: flex; align-items: center; gap: 8px; }
+
+    .sat-track {
+      flex: 1;
+      min-width: 60px;
+      background: var(--track);
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+    }
+
+    .sat-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 4px;
+      transition: width .5s cubic-bezier(.4,0,.2,1);
+    }
+
+    .sat-pct { font-size: 12px; font-weight: 700; width: 40px; flex-shrink: 0; }
+    .sat-votes { font-size: 11px; color: var(--muted); text-align: right; white-space: nowrap; }
+
+    /* BOTTOM CARD: tabs */
+    .card-tabs {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .tab-list { display: flex; }
 
     .tab-btn {
-      background: transparent;
+      background: none;
       border: none;
       border-bottom: 2px solid transparent;
-      color: var(--text-muted);
+      color: var(--muted);
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
-      padding: 10px 16px;
+      padding: 14px 0;
+      margin-right: 20px;
       margin-bottom: -1px;
       transition: color .15s, border-color .15s;
     }
-
-    .tab-btn.active {
-      color: var(--text);
-      border-bottom-color: var(--accent-h);
-    }
-
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--purple); }
     .tab-btn:hover:not(.active) { color: var(--text); }
 
     .tab-badge {
-      background: var(--surface2);
-      border-radius: 10px;
+      background: var(--bg);
+      border-radius: 20px;
       font-size: 11px;
       font-weight: 700;
       padding: 1px 7px;
-      margin-left: 6px;
+      margin-left: 5px;
+      color: var(--muted);
     }
+
+    .tab-hint { font-size: 11px; color: var(--light); font-style: italic; padding: 4px 0; }
 
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    /* ── TABLE ── */
-    .table-wrap {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
+    /* UNANSWERED LIST */
+    .unans-list { list-style: none; }
+
+    .unans-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      transition: background .1s;
     }
+    .unans-item:last-child { border-bottom: none; }
+    .unans-item:hover { background: var(--hover); }
 
-    table { width: 100%; border-collapse: collapse; }
-
-    thead { background: var(--surface2); }
-
-    th {
-      font-size: 11px;
+    .item-num {
+      font-size: 13px;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      color: var(--text-muted);
-      padding: 12px 16px;
-      text-align: left;
+      color: var(--light);
+      width: 20px;
+      text-align: right;
+      flex-shrink: 0;
+      padding-top: 1px;
     }
 
-    td { padding: 12px 16px; border-top: 1px solid var(--border); vertical-align: top; }
+    .item-body { flex: 1; min-width: 0; }
 
-    tr:hover td { background: var(--surface2); }
+    .item-text {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.4;
+      margin-bottom: 5px;
+    }
 
-    .cell-date { color: var(--text-muted); font-size: 12px; white-space: nowrap; }
-    .cell-id   { color: var(--text-muted); font-size: 11px; font-family: monospace; }
-    .cell-text { color: var(--text); line-height: 1.5; }
+    .item-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 
-    /* ── PAGINATION ── */
-    .pagination {
+    .co-badge {
+      display: inline-block;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      letter-spacing: .02em;
+    }
+
+    .freq-badge {
+      display: inline-block;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+    }
+
+    .item-time {
+      font-size: 12px;
+      color: var(--light);
+      white-space: nowrap;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+
+    /* NEGATIVE FEEDBACK */
+    .neg-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      transition: background .1s;
+    }
+    .neg-item:last-child { border-bottom: none; }
+    .neg-item:hover { background: var(--hover); }
+
+    .neg-text { flex: 1; font-size: 14px; color: var(--text); line-height: 1.4; }
+    .neg-meta { margin-top: 4px; font-size: 11px; color: var(--light); font-family: monospace; }
+    .neg-time { font-size: 12px; color: var(--light); white-space: nowrap; flex-shrink: 0; }
+
+    /* PAGINATION */
+    .pag {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 16px;
+      padding: 12px 20px;
       border-top: 1px solid var(--border);
+    }
+    .pag-info { font-size: 12px; color: var(--muted); }
+    .pag-btns { display: flex; gap: 6px; }
+
+    .pag-btn {
       background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 10px;
+      transition: all .12s;
     }
+    .pag-btn:hover:not(:disabled) { background: var(--bg); color: var(--text); }
+    .pag-btn:disabled { opacity: .4; cursor: default; }
 
-    .page-info { color: var(--text-muted); font-size: 13px; }
-
-    .page-btns { display: flex; gap: 6px; }
-
-    /* ── EMPTY / LOADING ── */
-    .empty-state {
+    /* EMPTY / ERROR */
+    .empty {
       text-align: center;
-      padding: 48px 16px;
-      color: var(--text-muted);
+      padding: 36px 20px;
+      font-size: 13px;
+      color: var(--light);
     }
 
-    .empty-state svg { opacity: .3; margin-bottom: 12px; }
-    .empty-state p { font-size: 15px; }
-
-    .skeleton {
-      background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.2s infinite;
-      border-radius: 4px;
-    }
-
-    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-    .spinner {
-      width: 18px; height: 18px;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent-h);
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-      display: inline-block;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── NOTIFICATION ── */
+    /* TOAST */
     #toast {
       position: fixed;
       bottom: 24px;
       right: 24px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 12px 18px;
-      font-size: 14px;
+      background: var(--text);
+      color: #fff;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 13px;
       opacity: 0;
       pointer-events: none;
       transition: opacity .2s;
       z-index: 999;
     }
-    #toast.show { opacity: 1; pointer-events: auto; }
-    #toast.error { border-color: var(--red); color: var(--red); }
+    #toast.show { opacity: 1; }
+    #toast.err  { background: var(--red); }
   </style>
 </head>
 <body>
 
-<!-- ════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════════
      LOGIN
-     ════════════════════════════════════════════════ -->
+     ══════════════════════════════════════════════════ -->
 <div id="login-screen">
   <div class="login-card">
     <div class="login-logo">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
         <path d="M5 9h14l-1.5 9H6.5L5 9z" fill="#7c3aed"/>
         <path d="M3 9h18M8 9V6a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v3" stroke="#7c3aed" stroke-width="1.5" stroke-linecap="round"/>
         <path d="M17 13h2a2 2 0 0 1 0 4h-2" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
       <span class="login-logo-text">Coffinho <span>Admin</span></span>
     </div>
-
-    <p class="login-subtitle">Insira a chave de acesso para continuar.</p>
-
+    <p class="login-sub">Insira a chave de acesso para continuar.</p>
     <div>
       <label for="admin-key-input">Chave de acesso</label>
-      <input
-        id="admin-key-input"
-        type="password"
-        placeholder="••••••••••••••••"
-        autocomplete="current-password"
-      />
+      <input id="admin-key-input" type="password" placeholder="••••••••••••••••" autocomplete="current-password" />
     </div>
-
     <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Entrar</button>
     <p class="login-error" id="login-error"></p>
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════════
      DASHBOARD
-     ════════════════════════════════════════════════ -->
+     ══════════════════════════════════════════════════ -->
 <div id="dashboard-screen">
+
   <header>
-    <div class="header-logo">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <div class="h-left">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
         <path d="M5 9h14l-1.5 9H6.5L5 9z" fill="#7c3aed"/>
         <path d="M3 9h18M8 9V6a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v3" stroke="#7c3aed" stroke-width="1.5" stroke-linecap="round"/>
         <path d="M17 13h2a2 2 0 0 1 0 4h-2" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
-      Coffinho <span>Admin</span>
+      <span class="h-title">Dashboard</span>
     </div>
-    <button class="btn btn-ghost" onclick="doLogout()">Sair</button>
+    <div class="h-right">
+      <div class="period-wrap">
+        <button class="period-btn" id="period-btn" onclick="togglePeriodMenu()">
+          <span id="period-label">Últimos 30 dias</span>
+          <span class="chevron">▾</span>
+        </button>
+        <div class="period-menu" id="period-menu" hidden>
+          <button onclick="setPeriod('today','Hoje')">Hoje</button>
+          <button onclick="setPeriod('7d','Últimos 7 dias')">Últimos 7 dias</button>
+          <button onclick="setPeriod('30d','Últimos 30 dias')" class="sel">Últimos 30 dias</button>
+          <button onclick="setPeriod('month','Este mês')">Este mês</button>
+          <button onclick="setPeriod('all','Tudo')">Tudo</button>
+        </div>
+      </div>
+      <button class="btn-icon" id="theme-btn" onclick="toggleTheme()" title="Alternar tema">🌙</button>
+      <button class="btn btn-ghost" onclick="doLogout()">Sair</button>
+    </div>
   </header>
 
   <main>
 
-    <!-- Filtros -->
-    <div class="filters">
-      <div class="filter-field">
-        <label for="f-from">De</label>
-        <input type="date" id="f-from" />
+    <!-- Stat cards -->
+    <div class="stats-grid">
+      <div class="stat-card" style="border-top-color:#f97316">
+        <div class="stat-lbl">Conversas</div>
+        <div class="stat-val" id="s-conv">—</div>
+        <div class="stat-sub" id="s-conv-sub"></div>
       </div>
-      <div class="filter-field">
-        <label for="f-to">Até</label>
-        <input type="date" id="f-to" />
+      <div class="stat-card" style="border-top-color:#3b82f6">
+        <div class="stat-lbl">Perguntas</div>
+        <div class="stat-val" id="s-msgs">—</div>
+        <div class="stat-sub" id="s-msgs-sub"></div>
       </div>
-      <button class="btn btn-outline btn-sm" onclick="applyFilter()">Filtrar</button>
-      <div class="quick-btns" style="margin-left:auto">
-        <button class="btn btn-ghost btn-sm" onclick="setQuick('today')">Hoje</button>
-        <button class="btn btn-ghost btn-sm" onclick="setQuick('week')">Esta semana</button>
-        <button class="btn btn-ghost btn-sm" onclick="setQuick('month')">Este mês</button>
-        <button class="btn btn-ghost btn-sm" onclick="setQuick('all')">Tudo</button>
+      <div class="stat-card" style="border-top-color:#f59e0b">
+        <div class="stat-lbl">Sem resposta</div>
+        <div class="stat-val" id="s-unans">—</div>
+        <div class="stat-sub" id="s-unans-sub"></div>
+      </div>
+      <div class="stat-card" style="border-top-color:#22c55e">
+        <div class="stat-lbl">Satisfação</div>
+        <div class="stat-val" id="s-sat">—</div>
+        <div class="stat-sub" id="s-sat-sub"></div>
       </div>
     </div>
 
-    <!-- Cards -->
-    <div class="stats-grid" id="stats-grid">
-      <div class="stat-card"><div class="stat-label">Conversas</div><div class="stat-value" id="s-conv">—</div></div>
-      <div class="stat-card"><div class="stat-label">Mensagens enviadas</div><div class="stat-value" id="s-msgs">—</div></div>
-      <div class="stat-card"><div class="stat-label">Perguntas sem resposta</div><div class="stat-value" id="s-unans">—</div><div class="stat-sub" id="s-unans-rate"></div></div>
-      <div class="stat-card"><div class="stat-label">Satisfação</div><div class="stat-value" id="s-sat">—</div><div class="stat-sub" id="s-sat-sub"></div></div>
+    <!-- Company stats -->
+    <div class="company-grid">
+
+      <!-- Usage bars -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Uso por empresa</div>
+          <div class="card-desc" id="usage-desc">Perguntas no período</div>
+        </div>
+        <div class="card-body" id="usage-bars">
+          <div class="empty">Carregando...</div>
+        </div>
+      </div>
+
+      <!-- Satisfaction table -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Satisfação por empresa</div>
+          <div class="card-desc">Proporção de feedback positivo</div>
+        </div>
+        <div class="card-body" style="padding-top:4px">
+          <table class="sat-table">
+            <thead>
+              <tr>
+                <th>Empresa</th>
+                <th colspan="2">Satisfação</th>
+                <th>👍 / 👎</th>
+              </tr>
+            </thead>
+            <tbody id="sat-tbody">
+              <tr><td colspan="4"><div class="empty">Carregando...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
 
-    <!-- Tabs -->
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="unanswered" onclick="switchTab('unanswered')">
-        Sem resposta <span class="tab-badge" id="badge-unans">0</span>
-      </button>
-      <button class="tab-btn" data-tab="negative" onclick="switchTab('negative')">
-        Feedback negativo <span class="tab-badge" id="badge-neg">0</span>
-      </button>
-    </div>
-
-    <!-- Tab: Sem Resposta -->
-    <div class="tab-panel active" id="tab-unanswered">
-      <div class="table-wrap">
-        <table>
+    <!-- Últimas conversas -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-head">
+        <div class="card-title">Últimas conversas</div>
+        <div class="card-desc">Conversas recentes no período</div>
+      </div>
+      <div class="card-body" style="padding:0">
+        <table class="conv-table">
           <thead>
             <tr>
-              <th style="width:160px">Data</th>
-              <th>Pergunta</th>
-              <th style="width:120px">Conversa</th>
+              <th>ID</th>
+              <th>Sistema</th>
+              <th>Empresa</th>
+              <th>Usuário</th>
+              <th>Msgs</th>
+              <th>Última atividade</th>
             </tr>
           </thead>
-          <tbody id="tbody-unans"></tbody>
+          <tbody id="conv-tbody">
+            <tr><td colspan="6"><div class="empty">Carregando...</div></td></tr>
+          </tbody>
         </table>
-        <div class="pagination" id="pag-unans" style="display:none">
-          <span class="page-info" id="pag-unans-info"></span>
-          <div class="page-btns">
-            <button class="btn btn-outline btn-sm" id="pag-unans-prev" onclick="pagePrev('unans')">← Anterior</button>
-            <button class="btn btn-outline btn-sm" id="pag-unans-next" onclick="pageNext('unans')">Próxima →</button>
+        <div class="pag" id="pag-conv" hidden>
+          <span class="pag-info" id="pag-conv-info"></span>
+          <div class="pag-btns">
+            <button class="pag-btn" id="pag-conv-prev" onclick="pagePrev('conv')">← Anterior</button>
+            <button class="pag-btn" id="pag-conv-next" onclick="pageNext('conv')">Próxima →</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Tab: Feedback Negativo -->
-    <div class="tab-panel" id="tab-negative">
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:160px">Data</th>
-              <th>Resposta</th>
-              <th style="width:120px">Conversa</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-neg"></tbody>
-        </table>
-        <div class="pagination" id="pag-neg" style="display:none">
-          <span class="page-info" id="pag-neg-info"></span>
-          <div class="page-btns">
-            <button class="btn btn-outline btn-sm" id="pag-neg-prev" onclick="pagePrev('neg')">← Anterior</button>
-            <button class="btn btn-outline btn-sm" id="pag-neg-next" onclick="pageNext('neg')">Próxima →</button>
+    <!-- Bottom card: unanswered + negative tabs -->
+    <div class="card">
+      <div class="card-tabs">
+        <div class="tab-list">
+          <button class="tab-btn active" data-tab="unans" onclick="switchTab('unans')">
+            Perguntas sem resposta
+            <span class="tab-badge" id="badge-unans">0</span>
+          </button>
+          <button class="tab-btn" data-tab="neg" onclick="switchTab('neg')">
+            Feedback negativo
+            <span class="tab-badge" id="badge-neg">0</span>
+          </button>
+        </div>
+        <span class="tab-hint" id="tab-hint">Backlog de documentação — o que escrever primeiro</span>
+      </div>
+
+      <!-- Unanswered panel -->
+      <div class="tab-panel active" id="tab-unans">
+        <ul class="unans-list" id="unans-list">
+          <li><div class="empty">Carregando...</div></li>
+        </ul>
+        <div class="pag" id="pag-unans" hidden>
+          <span class="pag-info" id="pag-unans-info"></span>
+          <div class="pag-btns">
+            <button class="pag-btn" id="pag-unans-prev" onclick="pagePrev('unans')">← Anterior</button>
+            <button class="pag-btn" id="pag-unans-next" onclick="pageNext('unans')">Próxima →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Negative feedback panel -->
+      <div class="tab-panel" id="tab-neg">
+        <div id="neg-list"></div>
+        <div class="pag" id="pag-neg" hidden>
+          <span class="pag-info" id="pag-neg-info"></span>
+          <div class="pag-btns">
+            <button class="pag-btn" id="pag-neg-prev" onclick="pagePrev('neg')">← Anterior</button>
+            <button class="pag-btn" id="pag-neg-next" onclick="pageNext('neg')">Próxima →</button>
           </div>
         </div>
       </div>
@@ -498,21 +812,52 @@
 <div id="toast"></div>
 
 <script>
+  /* ── CONSTANTS ─────────────────────────────────────────────────────── */
   const SESSION_KEY = 'coffinho:admin-key';
   const PAGE_SIZE   = 20;
 
-  let adminKey = '';
-  let filterFrom = '';
-  let filterTo   = '';
+  const CO_COLORS = [
+    { bg: '#fef3c7', text: '#92400e' },
+    { bg: '#dbeafe', text: '#1e40af' },
+    { bg: '#dcfce7', text: '#166534' },
+    { bg: '#fce7f3', text: '#9d174d' },
+    { bg: '#ede9fe', text: '#5b21b6' },
+    { bg: '#fff7ed', text: '#9a3412' },
+    { bg: '#ecfdf5', text: '#065f46' },
+    { bg: '#fdf4ff', text: '#701a75' },
+  ];
+
+  /* ── STATE ─────────────────────────────────────────────────────────── */
+  let adminKey    = '';
+  let blockTimer  = null;
+  let filterFrom  = '';
+  let filterTo    = '';
+  let currentPeriod = '30d';
 
   const state = {
     unans: { offset: 0, total: 0 },
     neg:   { offset: 0, total: 0 },
+    conv:  { offset: 0, total: 0 },
   };
 
-  let blockTimer = null;
+  /* ── THEME ─────────────────────────────────────────────────────────── */
 
-  // ── AUTH ──────────────────────────────────────────────────────────────────
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    const btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem('coffinho:theme', theme);
+  }
+
+  function toggleTheme() {
+    const cur = document.documentElement.getAttribute('data-theme') || 'light';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+  }
+
+  // Aplica tema salvo imediatamente (evita flash)
+  applyTheme(localStorage.getItem('coffinho:theme') || 'light');
+
+  /* ── AUTH ──────────────────────────────────────────────────────────── */
 
   async function doLogin() {
     const input = document.getElementById('admin-key-input');
@@ -532,7 +877,7 @@
         showDashboard();
       } else if (status === 429) {
         startBlockCountdown(data?.blockedFor ?? 120);
-        return; // botão fica desabilitado pelo countdown
+        return;
       } else {
         const left = data?.attemptsLeft;
         setLoginError(
@@ -599,7 +944,7 @@
     document.getElementById('login-error').textContent = msg;
   }
 
-  // ── BOOT ──────────────────────────────────────────────────────────────────
+  /* ── BOOT ──────────────────────────────────────────────────────────── */
 
   (async function boot() {
     const saved = sessionStorage.getItem(SESSION_KEY);
@@ -612,59 +957,61 @@
       }
       sessionStorage.removeItem(SESSION_KEY);
     }
-    // já está no login por padrão
   })();
 
   document.getElementById('admin-key-input')
     .addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
 
-  // ── DASHBOARD ─────────────────────────────────────────────────────────────
+  /* ── DASHBOARD INIT ────────────────────────────────────────────────── */
 
   function showDashboard() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('dashboard-screen').classList.add('visible');
-    loadAll();
+    setPeriod('30d', 'Últimos 30 dias', false); // sets filter + loads data
   }
 
-  function loadAll() {
-    loadStats();
-    loadUnanswered();
-    loadNegative();
+  /* ── PERIOD ────────────────────────────────────────────────────────── */
+
+  function togglePeriodMenu() {
+    const menu = document.getElementById('period-menu');
+    const btn  = document.getElementById('period-btn');
+    const isOpen = !menu.hidden;
+    menu.hidden = isOpen;
+    btn.classList.toggle('open', !isOpen);
   }
 
-  // ── FILTER ────────────────────────────────────────────────────────────────
-
-  function buildFilterParams(extra = '') {
-    const p = new URLSearchParams();
-    if (filterFrom) p.set('from', filterFrom);
-    if (filterTo)   p.set('to',   filterTo);
-    if (extra) {
-      const ep = new URLSearchParams(extra);
-      ep.forEach((v, k) => p.set(k, v));
+  document.addEventListener('click', (e) => {
+    const wrap = document.querySelector('.period-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById('period-menu').hidden = true;
+      document.getElementById('period-btn').classList.remove('open');
     }
-    return p.toString() ? '?' + p.toString() : '';
-  }
+  });
 
-  function applyFilter() {
-    filterFrom = document.getElementById('f-from').value;
-    filterTo   = document.getElementById('f-to').value;
-    state.unans.offset = 0;
-    state.neg.offset   = 0;
-    loadAll();
-  }
+  function setPeriod(range, label, reload = true) {
+    currentPeriod = range;
+    document.getElementById('period-label').textContent = label;
+    document.getElementById('period-menu').hidden = true;
+    document.getElementById('period-btn').classList.remove('open');
 
-  function setQuick(range) {
-    const now  = new Date();
-    const pad  = (n) => String(n).padStart(2, '0');
-    const fmt  = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    // update active button style
+    document.querySelectorAll('.period-menu button').forEach(b => {
+      b.classList.toggle('sel', b.textContent.trim() === label);
+    });
+
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
     const today = fmt(now);
 
     if (range === 'today') {
       filterFrom = today; filterTo = today;
-    } else if (range === 'week') {
-      const start = new Date(now);
-      start.setDate(now.getDate() - now.getDay());
-      filterFrom = fmt(start); filterTo = today;
+    } else if (range === '7d') {
+      const d = new Date(now); d.setDate(d.getDate() - 6);
+      filterFrom = fmt(d); filterTo = today;
+    } else if (range === '30d') {
+      const d = new Date(now); d.setDate(d.getDate() - 29);
+      filterFrom = fmt(d); filterTo = today;
     } else if (range === 'month') {
       filterFrom = `${now.getFullYear()}-${pad(now.getMonth()+1)}-01`;
       filterTo = today;
@@ -672,14 +1019,27 @@
       filterFrom = ''; filterTo = '';
     }
 
-    document.getElementById('f-from').value = filterFrom;
-    document.getElementById('f-to').value   = filterTo;
-    state.unans.offset = 0;
-    state.neg.offset   = 0;
-    loadAll();
+    // update usage card subtitle
+    document.getElementById('usage-desc').textContent =
+      range === 'all' ? 'Perguntas — todos os períodos' : `Perguntas — ${label.toLowerCase()}`;
+
+    if (reload) {
+      state.unans.offset = 0;
+      state.neg.offset   = 0;
+      state.conv.offset  = 0;
+      loadAll();
+    }
   }
 
-  // ── API ───────────────────────────────────────────────────────────────────
+  /* ── API ───────────────────────────────────────────────────────────── */
+
+  function buildQS(extra = {}) {
+    const p = new URLSearchParams();
+    if (filterFrom) p.set('from', filterFrom);
+    if (filterTo)   p.set('to',   filterTo);
+    Object.entries(extra).forEach(([k, v]) => p.set(k, String(v)));
+    return p.toString() ? '?' + p.toString() : '';
+  }
 
   async function apiFetch(path) {
     const res = await fetch(path, { headers: { 'x-admin-key': adminKey } });
@@ -687,164 +1047,304 @@
     return res.json();
   }
 
-  // ── STATS ─────────────────────────────────────────────────────────────────
+  /* ── LOAD ALL ──────────────────────────────────────────────────────── */
+
+  function loadAll() {
+    loadStats();
+    loadCompanyStats();
+    loadConversations();
+    loadUnanswered();
+    loadNegative();
+  }
+
+  /* ── STATS CARDS ───────────────────────────────────────────────────── */
 
   async function loadStats() {
-    const qs = buildFilterParams();
     try {
-      const s = await apiFetch(`/api/admin/stats${qs}`);
+      const s = await apiFetch(`/api/admin/stats${buildQS()}`);
 
-      set('s-conv',  fmt(s.totalConversations));
-      set('s-msgs',  fmt(s.totalUserMessages));
+      set('s-conv', fmt(s.totalConversations));
+      set('s-conv-sub', ''); // clear
+      const convSub = document.getElementById('s-conv-sub');
+      convSub.innerHTML = `<span class="pill pill-blue">${fmt(s.totalConversations)} sessões</span>`;
+
+      set('s-msgs', fmt(s.totalUserMessages));
+      const avg = s.totalConversations > 0
+        ? (s.totalUserMessages / s.totalConversations).toFixed(1)
+        : '0';
+      set('s-msgs-sub', `${avg} por conversa em média`);
 
       const unansEl = document.getElementById('s-unans');
       unansEl.textContent = fmt(s.totalUnanswered);
-      unansEl.className   = 'stat-value ' + (s.unansweredRatePercent > 20 ? 'red' : s.unansweredRatePercent > 10 ? 'yellow' : '');
-      set('s-unans-rate', `${s.unansweredRatePercent}% das perguntas`);
+      document.getElementById('s-unans-sub').innerHTML =
+        `<span class="pill pill-yellow">${s.unansweredRatePercent}% do total</span>`;
 
-      const satEl  = document.getElementById('s-sat');
+      const satEl = document.getElementById('s-sat');
       satEl.textContent = s.feedback.satisfactionRatePercent > 0
         ? `${s.feedback.satisfactionRatePercent}%`
         : '—';
-      satEl.className = 'stat-value ' + (s.feedback.satisfactionRatePercent >= 70 ? 'green' : s.feedback.satisfactionRatePercent > 0 ? 'yellow' : '');
-      set('s-sat-sub', `${fmt(s.feedback.positive)} 👍  ${fmt(s.feedback.negative)} 👎`);
-    } catch (err) {
+      document.getElementById('s-sat-sub').innerHTML =
+        `<span class="pill pill-green">${fmt(s.feedback.positive)} 👍 · ${fmt(s.feedback.negative)} 👎</span>`;
+    } catch {
       showToast('Erro ao carregar stats.', true);
     }
   }
 
-  // ── UNANSWERED ────────────────────────────────────────────────────────────
+  /* ── COMPANY STATS ─────────────────────────────────────────────────── */
 
-  async function loadUnanswered() {
-    const qs = buildFilterParams(`limit=${PAGE_SIZE}&offset=${state.unans.offset}`);
+  async function loadCompanyStats() {
     try {
-      const data = await apiFetch(`/api/admin/unanswered${qs}`);
-      state.unans.total = data.total;
-      set('badge-unans', fmt(data.total));
-
-      const tbody = document.getElementById('tbody-unans');
-      if (!data.items.length) {
-        tbody.innerHTML = emptyRow(3, 'Nenhuma pergunta sem resposta no período');
-        hidePag('unans');
-        return;
-      }
-
-      tbody.innerHTML = data.items.map(r => `
-        <tr>
-          <td class="cell-date">${fmtDate(r.createdAt)}</td>
-          <td class="cell-text">${esc(r.question)}</td>
-          <td class="cell-id">${r.conversationId ? r.conversationId.slice(0,8) + '…' : '—'}</td>
-        </tr>
-      `).join('');
-
-      renderPag('unans');
+      const data = await apiFetch(`/api/admin/company-stats${buildQS()}`);
+      renderUsageBars(data.usage);
+      renderSatTable(data.satisfaction);
     } catch {
-      document.getElementById('tbody-unans').innerHTML = errorRow(3);
-      hidePag('unans');
+      document.getElementById('usage-bars').innerHTML = '<div class="empty">Erro ao carregar.</div>';
+      document.getElementById('sat-tbody').innerHTML  = '<tr><td colspan="4"><div class="empty">Erro ao carregar.</div></td></tr>';
     }
   }
 
-  // ── NEGATIVE FEEDBACK ─────────────────────────────────────────────────────
+  function renderUsageBars(items) {
+    const el = document.getElementById('usage-bars');
+    if (!items.length) {
+      el.innerHTML = '<div class="empty">Nenhum dado no período.</div>';
+      return;
+    }
+    const max  = items[0].questionCount;
+    const html = items.map(r => `
+      <div class="bar-row">
+        <span class="bar-lbl">${esc(formatAppId(r.appId))}</span>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${max > 0 ? (r.questionCount/max*100).toFixed(1) : 0}%"></div>
+        </div>
+        <span class="bar-count">${r.questionCount}</span>
+      </div>
+    `).join('');
+    el.innerHTML = html;
+  }
 
-  async function loadNegative() {
-    const qs = buildFilterParams(`limit=${PAGE_SIZE}&offset=${state.neg.offset}`);
+  function renderSatTable(items) {
+    const tbody = document.getElementById('sat-tbody');
+    if (!items.length) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty">Sem feedback no período.</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = items.map(r => `
+      <tr>
+        <td class="sat-co">${esc(formatAppId(r.appId))}</td>
+        <td>
+          <div class="sat-bar-wrap">
+            <div class="sat-track">
+              <div class="sat-fill" style="width:${r.satisfactionRatePercent}%"></div>
+            </div>
+            <span class="sat-pct">${r.satisfactionRatePercent}%</span>
+          </div>
+        </td>
+        <td></td>
+        <td class="sat-votes">${r.positive} · ${r.negative}</td>
+      </tr>
+    `).join('');
+  }
+
+  /* ── CONVERSATIONS ─────────────────────────────────────────────────── */
+
+  async function loadConversations() {
     try {
-      const data = await apiFetch(`/api/admin/feedback/negative${qs}`);
-      state.neg.total = data.total;
-      set('badge-neg', fmt(data.total));
+      const data = await apiFetch(
+        `/api/admin/conversations${buildQS({ limit: PAGE_SIZE, offset: state.conv.offset })}`
+      );
+      state.conv.total = data.total;
 
-      const tbody = document.getElementById('tbody-neg');
+      const tbody = document.getElementById('conv-tbody');
       if (!data.items.length) {
-        tbody.innerHTML = emptyRow(3, 'Nenhum feedback negativo no período');
-        hidePag('neg');
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty">Nenhuma conversa no período.</div></td></tr>';
+        document.getElementById('pag-conv').hidden = true;
         return;
       }
 
-      tbody.innerHTML = data.items.map(r => `
-        <tr>
-          <td class="cell-date">${fmtDate(r.createdAt)}</td>
-          <td class="cell-text">${esc(r.content)}</td>
-          <td class="cell-id">${r.conversationId.slice(0,8)}…</td>
-        </tr>
+      tbody.innerHTML = data.items.map(r => {
+        const sysColor = getCoColor(r.appId);
+        const empresa  = r.companyName ? esc(r.companyName) : '<span style="color:var(--light)">—</span>';
+        const usuario  = r.userLogin   ? esc(r.userLogin)   : (r.userId ? r.userId.slice(0,8) + '…' : '—');
+        return `
+          <tr>
+            <td class="conv-id">${r.id.slice(0, 8)}…</td>
+            <td>
+              <span class="co-badge" style="background:${sysColor.bg};color:${sysColor.text}">
+                ${esc(r.appId.toUpperCase())}
+              </span>
+            </td>
+            <td style="font-size:13px">${empresa}</td>
+            <td class="conv-user">${usuario}</td>
+            <td class="conv-msgs">${r.messageCount}</td>
+            <td class="conv-time">${timeAgo(r.lastMessageAt ?? r.createdAt)}</td>
+          </tr>
+        `;
+      }).join('');
+
+      renderPag('conv');
+    } catch {
+      document.getElementById('conv-tbody').innerHTML =
+        '<tr><td colspan="6"><div class="empty" style="color:#ef4444">Erro ao carregar.</div></td></tr>';
+      document.getElementById('pag-conv').hidden = true;
+    }
+  }
+
+  /* ── UNANSWERED ────────────────────────────────────────────────────── */
+
+  async function loadUnanswered() {
+    try {
+      const data = await apiFetch(
+        `/api/admin/unanswered-grouped${buildQS({ limit: PAGE_SIZE, offset: state.unans.offset })}`
+      );
+      state.unans.total = data.total;
+      set('badge-unans', String(data.total));
+
+      const ul = document.getElementById('unans-list');
+      if (!data.items.length) {
+        ul.innerHTML = '<li><div class="empty">Nenhuma pergunta sem resposta no período.</div></li>';
+        document.getElementById('pag-unans').hidden = true;
+        return;
+      }
+
+      ul.innerHTML = data.items.map((r, i) => {
+        const color = r.appId ? getCoColor(r.appId) : null;
+        const coBadge = r.appId
+          ? `<span class="co-badge" style="background:${color.bg};color:${color.text}">${esc(formatAppId(r.appId))}</span>`
+          : '';
+        const freqBadge = r.freq > 1
+          ? `<span class="freq-badge">${r.freq}x perguntado</span>`
+          : '';
+        return `
+          <li class="unans-item">
+            <span class="item-num">${state.unans.offset + i + 1}</span>
+            <div class="item-body">
+              <div class="item-text">${esc(r.question)}</div>
+              <div class="item-meta">${coBadge}${freqBadge}</div>
+            </div>
+            <span class="item-time">${timeAgo(r.lastAsked)}</span>
+          </li>
+        `;
+      }).join('');
+
+      renderPag('unans');
+    } catch {
+      document.getElementById('unans-list').innerHTML =
+        '<li><div class="empty" style="color:#ef4444">Erro ao carregar.</div></li>';
+      document.getElementById('pag-unans').hidden = true;
+    }
+  }
+
+  /* ── NEGATIVE FEEDBACK ─────────────────────────────────────────────── */
+
+  async function loadNegative() {
+    try {
+      const data = await apiFetch(
+        `/api/admin/feedback/negative${buildQS({ limit: PAGE_SIZE, offset: state.neg.offset })}`
+      );
+      state.neg.total = data.total;
+      set('badge-neg', String(data.total));
+
+      const container = document.getElementById('neg-list');
+      if (!data.items.length) {
+        container.innerHTML = '<div class="empty">Nenhum feedback negativo no período.</div>';
+        document.getElementById('pag-neg').hidden = true;
+        return;
+      }
+
+      container.innerHTML = data.items.map(r => `
+        <div class="neg-item">
+          <div class="neg-text">
+            ${esc(r.content)}
+            <div class="neg-meta">Conversa: ${r.conversationId.slice(0,8)}…</div>
+          </div>
+          <span class="neg-time">${timeAgo(r.createdAt)}</span>
+        </div>
       `).join('');
 
       renderPag('neg');
     } catch {
-      document.getElementById('tbody-neg').innerHTML = errorRow(3);
-      hidePag('neg');
+      document.getElementById('neg-list').innerHTML =
+        '<div class="empty" style="color:#ef4444">Erro ao carregar.</div>';
+      document.getElementById('pag-neg').hidden = true;
     }
   }
 
-  // ── PAGINATION ────────────────────────────────────────────────────────────
+  /* ── TABS ──────────────────────────────────────────────────────────── */
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.tab === name)
+    );
+    document.querySelectorAll('.tab-panel').forEach(p =>
+      p.classList.toggle('active', p.id === 'tab-' + name)
+    );
+    const hints = { unans: 'Backlog de documentação — o que escrever primeiro', neg: '' };
+    set('tab-hint', hints[name] ?? '');
+  }
+
+  /* ── PAGINATION ────────────────────────────────────────────────────── */
 
   function renderPag(key) {
     const { offset, total } = state[key];
     const pagEl = document.getElementById('pag-' + key);
-    pagEl.style.display = 'flex';
+    pagEl.hidden = total <= PAGE_SIZE;
+    if (total <= PAGE_SIZE) return;
 
     const start = offset + 1;
     const end   = Math.min(offset + PAGE_SIZE, total);
     set('pag-' + key + '-info', `${fmt(start)}–${fmt(end)} de ${fmt(total)}`);
-
     document.getElementById('pag-' + key + '-prev').disabled = offset === 0;
     document.getElementById('pag-' + key + '-next').disabled = end >= total;
   }
 
-  function hidePag(key) {
-    document.getElementById('pag-' + key).style.display = 'none';
-  }
-
   function pagePrev(key) {
     state[key].offset = Math.max(0, state[key].offset - PAGE_SIZE);
-    key === 'unans' ? loadUnanswered() : loadNegative();
+    ({ unans: loadUnanswered, neg: loadNegative, conv: loadConversations })[key]?.();
   }
 
   function pageNext(key) {
     state[key].offset += PAGE_SIZE;
-    key === 'unans' ? loadUnanswered() : loadNegative();
+    ({ unans: loadUnanswered, neg: loadNegative, conv: loadConversations })[key]?.();
   }
 
-  // ── TABS ──────────────────────────────────────────────────────────────────
-
-  function switchTab(name) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
-  }
-
-  // ── HELPERS ───────────────────────────────────────────────────────────────
+  /* ── HELPERS ───────────────────────────────────────────────────────── */
 
   function set(id, val) { document.getElementById(id).textContent = val; }
 
   function fmt(n) { return Number(n).toLocaleString('pt-BR'); }
 
-  function fmtDate(iso) {
-    return new Date(iso).toLocaleString('pt-BR', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    });
-  }
-
   function esc(str) {
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(str ?? '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  function emptyRow(cols, msg) {
-    return `<tr><td colspan="${cols}">
-      <div class="empty-state"><p>${msg}</p></div>
-    </td></tr>`;
+  function formatAppId(appId) {
+    if (!appId) return '?';
+    return appId.replace(/-/g, ' ').toUpperCase();
   }
 
-  function errorRow(cols) {
-    return `<tr><td colspan="${cols}">
-      <div class="empty-state" style="color:var(--red)"><p>Erro ao carregar dados.</p></div>
-    </td></tr>`;
+  function getCoColor(appId) {
+    let h = 0;
+    for (const c of appId) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    return CO_COLORS[h % CO_COLORS.length];
+  }
+
+  function timeAgo(iso) {
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1)   return 'agora';
+    if (mins < 60)  return `há ${mins}min`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `há ${hours}h`;
+    const days = Math.floor(hours / 24);
+    return `há ${days}d`;
   }
 
   let toastTimer;
   function showToast(msg, isError = false) {
     const el = document.getElementById('toast');
     el.textContent = msg;
-    el.className = 'show' + (isError ? ' error' : '');
+    el.className = 'show' + (isError ? ' err' : '');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
   }

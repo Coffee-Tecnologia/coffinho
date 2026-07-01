@@ -4,7 +4,10 @@ import { adminAuth } from '../middleware/adminAuth.js';
 import {
   getOverviewStats,
   getUnansweredQuestions,
+  getUnansweredGrouped,
   getNegativeFeedbackMessages,
+  getCompanyStats,
+  getRecentConversations,
 } from '../services/admin.service.js';
 
 const router = Router();
@@ -35,6 +38,18 @@ router.get('/admin/stats', async (req: Request, res: Response) => {
   }
 });
 
+router.get('/admin/company-stats', async (req: Request, res: Response) => {
+  try {
+    const from = parseDateParam(req.query.from);
+    const to   = parseDateParam(req.query.to);
+    const stats = await getCompanyStats(from, to);
+    res.json(stats);
+  } catch (err) {
+    console.error('[/admin/company-stats] erro:', err);
+    res.status(500).json({ error: 'Erro interno.' });
+  }
+});
+
 router.get('/admin/unanswered', async (req: Request, res: Response) => {
   try {
     const { limit, offset } = parsePaginationParams(req.query);
@@ -44,6 +59,32 @@ router.get('/admin/unanswered', async (req: Request, res: Response) => {
     res.json(result);
   } catch (err) {
     console.error('[/admin/unanswered] erro:', err);
+    res.status(500).json({ error: 'Erro interno.' });
+  }
+});
+
+router.get('/admin/unanswered-grouped', async (req: Request, res: Response) => {
+  try {
+    const { limit, offset } = parsePaginationParams(req.query);
+    const from = parseDateParam(req.query.from);
+    const to   = parseDateParam(req.query.to);
+    const result = await getUnansweredGrouped({ limit, offset, from, to });
+    res.json(result);
+  } catch (err) {
+    console.error('[/admin/unanswered-grouped] erro:', err);
+    res.status(500).json({ error: 'Erro interno.' });
+  }
+});
+
+router.get('/admin/conversations', async (req: Request, res: Response) => {
+  try {
+    const { limit, offset } = parsePaginationParams(req.query);
+    const from = parseDateParam(req.query.from);
+    const to   = parseDateParam(req.query.to);
+    const result = await getRecentConversations({ limit, offset, from, to });
+    res.json(result);
+  } catch (err) {
+    console.error('[/admin/conversations] erro:', err);
     res.status(500).json({ error: 'Erro interno.' });
   }
 });

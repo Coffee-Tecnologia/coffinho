@@ -5,6 +5,8 @@ export async function getOrCreateConversation(
   appId: string,
   conversationId?: string,
   userId?: string,
+  userLogin?: string,
+  companyName?: string,
 ): Promise<string> {
   if (conversationId) {
     const result = await pool.query<{ id: string }>(
@@ -15,8 +17,9 @@ export async function getOrCreateConversation(
   }
 
   const result = await pool.query<{ id: string }>(
-    'INSERT INTO coffinho.conversations (user_id, app_id) VALUES ($1, $2) RETURNING id',
-    [userId ?? null, appId],
+    `INSERT INTO coffinho.conversations (user_id, app_id, user_login, company_name)
+     VALUES ($1, $2, $3, $4) RETURNING id`,
+    [userId ?? null, appId, userLogin ?? null, companyName ?? null],
   );
   return result.rows[0].id;
 }
