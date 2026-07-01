@@ -6,8 +6,8 @@ import { getMessageById, setMessageFeedback } from '../services/history.service.
 const router = Router();
 
 router.patch('/messages/:id/feedback', internalAuth, async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { value } = req.body as { value?: unknown };
+  const id = req.params.id as string;
+  const { value } = req.body as { value?: 1 | -1 };
 
   if (value !== 1 && value !== -1) {
     res.status(400).json({ error: 'O campo value deve ser exatamente 1 ou -1.' });
