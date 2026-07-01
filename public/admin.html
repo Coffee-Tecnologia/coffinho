@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coffinho AI — Admin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f172a;
+      --surface:   #1e293b;
+      --surface2:  #273449;
+      --border:    #334155;
+      --accent:    #6d28d9;
+      --accent-h:  #7c3aed;
+      --text:      #e2e8f0;
+      --text-muted:#94a3b8;
+      --green:     #22c55e;
+      --red:       #ef4444;
+      --yellow:    #f59e0b;
+      --radius:    10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    /* ── LOGIN ── */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .login-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .login-logo svg { flex-shrink: 0; }
+
+    .login-logo-text { font-size: 20px; font-weight: 700; color: var(--text); }
+    .login-logo-text span { color: var(--accent-h); }
+
+    .login-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 6px;
+    }
+
+    input[type="password"], input[type="date"], input[type="text"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 14px;
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    input:focus { border-color: var(--accent-h); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 16px;
+      transition: opacity .15s, background .15s;
+    }
+
+    .btn:disabled { opacity: .5; cursor: default; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-h); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 13px;
+      padding: 6px 10px;
+    }
+    .btn-ghost:hover { color: var(--text); background: var(--surface2); }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .btn-outline:hover { border-color: var(--accent-h); color: var(--text); }
+
+    .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+    .login-error {
+      margin-top: 12px;
+      color: var(--red);
+      font-size: 13px;
+      text-align: center;
+      min-height: 18px;
+    }
+
+    /* ── DASHBOARD ── */
+    #dashboard-screen { display: none; min-height: 100vh; flex-direction: column; }
+    #dashboard-screen.visible { display: flex; }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .header-logo span { color: var(--accent-h); }
+
+    main { flex: 1; padding: 24px; max-width: 1100px; width: 100%; margin: 0 auto; }
+
+    /* ── FILTROS ── */
+    .filters {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .filter-field { display: flex; flex-direction: column; gap: 6px; }
+    .filter-field input { width: 160px; }
+
+    .quick-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* ── STATS ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .stat-value.green { color: var(--green); }
+    .stat-value.red   { color: var(--red); }
+    .stat-value.yellow { color: var(--yellow); }
+
+    .stat-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 16px;
+      margin-bottom: -1px;
+      transition: color .15s, border-color .15s;
+    }
+
+    .tab-btn.active {
+      color: var(--text);
+      border-bottom-color: var(--accent-h);
+    }
+
+    .tab-btn:hover:not(.active) { color: var(--text); }
+
+    .tab-badge {
+      background: var(--surface2);
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 7px;
+      margin-left: 6px;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead { background: var(--surface2); }
+
+    th {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-muted);
+      padding: 12px 16px;
+      text-align: left;
+    }
+
+    td { padding: 12px 16px; border-top: 1px solid var(--border); vertical-align: top; }
+
+    tr:hover td { background: var(--surface2); }
+
+    .cell-date { color: var(--text-muted); font-size: 12px; white-space: nowrap; }
+    .cell-id   { color: var(--text-muted); font-size: 11px; font-family: monospace; }
+    .cell-text { color: var(--text); line-height: 1.5; }
+
+    /* ── PAGINATION ── */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .page-info { color: var(--text-muted); font-size: 13px; }
+
+    .page-btns { display: flex; gap: 6px; }
+
+    /* ── EMPTY / LOADING ── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 16px;
+      color: var(--text-muted);
+    }
+
+    .empty-state svg { opacity: .3; margin-bottom: 12px; }
+    .empty-state p { font-size: 15px; }
+
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+      border-radius: 4px;
+    }
+
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent-h);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── NOTIFICATION ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 18px;
+      font-size: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+      z-index: 999;
+    }
+    #toast.show { opacity: 1; pointer-events: auto; }
+    #toast.error { border-color: var(--red); color: var(--red); }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════
+     LOGIN
+     ════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 9h14l-1.5 9H6.5L5 9z" fill="#7c3aed"/>
+        <path d="M3 9h18M8 9V6a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v3" stroke="#7c3aed" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M17 13h2a2 2 0 0 1 0 4h-2" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <span class="login-logo-text">Coffinho <span>Admin</span></span>
+    </div>
+
+    <p class="login-subtitle">Insira a chave de acesso para continuar.</p>
+
+    <div>
+      <label for="admin-key-input">Chave de acesso</label>
+      <input
+        id="admin-key-input"
+        type="password"
+        placeholder="••••••••••••••••"
+        autocomplete="current-password"
+      />
+    </div>
+
+    <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Entrar</button>
+    <p class="login-error" id="login-error"></p>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     DASHBOARD
+     ════════════════════════════════════════════════ -->
+<div id="dashboard-screen">
+  <header>
+    <div class="header-logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M5 9h14l-1.5 9H6.5L5 9z" fill="#7c3aed"/>
+        <path d="M3 9h18M8 9V6a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v3" stroke="#7c3aed" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M17 13h2a2 2 0 0 1 0 4h-2" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      Coffinho <span>Admin</span>
+    </div>
+    <button class="btn btn-ghost" onclick="doLogout()">Sair</button>
+  </header>
+
+  <main>
+
+    <!-- Filtros -->
+    <div class="filters">
+      <div class="filter-field">
+        <label for="f-from">De</label>
+        <input type="date" id="f-from" />
+      </div>
+      <div class="filter-field">
+        <label for="f-to">Até</label>
+        <input type="date" id="f-to" />
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="applyFilter()">Filtrar</button>
+      <div class="quick-btns" style="margin-left:auto">
+        <button class="btn btn-ghost btn-sm" onclick="setQuick('today')">Hoje</button>
+        <button class="btn btn-ghost btn-sm" onclick="setQuick('week')">Esta semana</button>
+        <button class="btn btn-ghost btn-sm" onclick="setQuick('month')">Este mês</button>
+        <button class="btn btn-ghost btn-sm" onclick="setQuick('all')">Tudo</button>
+      </div>
+    </div>
+
+    <!-- Cards -->
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card"><div class="stat-label">Conversas</div><div class="stat-value" id="s-conv">—</div></div>
+      <div class="stat-card"><div class="stat-label">Mensagens enviadas</div><div class="stat-value" id="s-msgs">—</div></div>
+      <div class="stat-card"><div class="stat-label">Perguntas sem resposta</div><div class="stat-value" id="s-unans">—</div><div class="stat-sub" id="s-unans-rate"></div></div>
+      <div class="stat-card"><div class="stat-label">Satisfação</div><div class="stat-value" id="s-sat">—</div><div class="stat-sub" id="s-sat-sub"></div></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="unanswered" onclick="switchTab('unanswered')">
+        Sem resposta <span class="tab-badge" id="badge-unans">0</span>
+      </button>
+      <button class="tab-btn" data-tab="negative" onclick="switchTab('negative')">
+        Feedback negativo <span class="tab-badge" id="badge-neg">0</span>
+      </button>
+    </div>
+
+    <!-- Tab: Sem Resposta -->
+    <div class="tab-panel active" id="tab-unanswered">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:160px">Data</th>
+              <th>Pergunta</th>
+              <th style="width:120px">Conversa</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-unans"></tbody>
+        </table>
+        <div class="pagination" id="pag-unans" style="display:none">
+          <span class="page-info" id="pag-unans-info"></span>
+          <div class="page-btns">
+            <button class="btn btn-outline btn-sm" id="pag-unans-prev" onclick="pagePrev('unans')">← Anterior</button>
+            <button class="btn btn-outline btn-sm" id="pag-unans-next" onclick="pageNext('unans')">Próxima →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Feedback Negativo -->
+    <div class="tab-panel" id="tab-negative">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:160px">Data</th>
+              <th>Resposta</th>
+              <th style="width:120px">Conversa</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-neg"></tbody>
+        </table>
+        <div class="pagination" id="pag-neg" style="display:none">
+          <span class="page-info" id="pag-neg-info"></span>
+          <div class="page-btns">
+            <button class="btn btn-outline btn-sm" id="pag-neg-prev" onclick="pagePrev('neg')">← Anterior</button>
+            <button class="btn btn-outline btn-sm" id="pag-neg-next" onclick="pageNext('neg')">Próxima →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const SESSION_KEY = 'coffinho:admin-key';
+  const PAGE_SIZE   = 20;
+
+  let adminKey = '';
+  let filterFrom = '';
+  let filterTo   = '';
+
+  const state = {
+    unans: { offset: 0, total: 0 },
+    neg:   { offset: 0, total: 0 },
+  };
+
+  let blockTimer = null;
+
+  // ── AUTH ──────────────────────────────────────────────────────────────────
+
+  async function doLogin() {
+    const input = document.getElementById('admin-key-input');
+    const key   = input.value.trim();
+    if (!key) return;
+
+    const btn = document.getElementById('login-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+    setLoginError('');
+
+    try {
+      const { ok, status, data } = await validateKey(key);
+      if (ok) {
+        adminKey = key;
+        sessionStorage.setItem(SESSION_KEY, key);
+        showDashboard();
+      } else if (status === 429) {
+        startBlockCountdown(data?.blockedFor ?? 120);
+        return; // botão fica desabilitado pelo countdown
+      } else {
+        const left = data?.attemptsLeft;
+        setLoginError(
+          left != null
+            ? `Chave inválida. ${left} tentativa(s) restante(s).`
+            : 'Chave inválida. Verifique e tente novamente.'
+        );
+      }
+    } catch {
+      setLoginError('Não foi possível conectar ao servidor.');
+    } finally {
+      if (!blockTimer) {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+      }
+    }
+  }
+
+  async function validateKey(key) {
+    const res  = await fetch('/api/admin/stats', { headers: { 'x-admin-key': key } });
+    const data = await res.json().catch(() => null);
+    return { ok: res.ok, status: res.status, data };
+  }
+
+  function startBlockCountdown(minutes) {
+    clearInterval(blockTimer);
+    let remaining = minutes;
+    const btn   = document.getElementById('login-btn');
+    const input = document.getElementById('admin-key-input');
+    btn.disabled   = true;
+    input.disabled = true;
+
+    function tick() {
+      setLoginError(`Acesso bloqueado. Tente novamente em ${remaining} min.`);
+      btn.textContent = `Bloqueado (${remaining} min)`;
+    }
+    tick();
+    blockTimer = setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        clearInterval(blockTimer);
+        blockTimer = null;
+        btn.disabled   = false;
+        input.disabled = false;
+        btn.textContent = 'Entrar';
+        setLoginError('');
+      } else {
+        tick();
+      }
+    }, 60_000);
+  }
+
+  function doLogout() {
+    clearInterval(blockTimer);
+    blockTimer = null;
+    sessionStorage.removeItem(SESSION_KEY);
+    adminKey = '';
+    document.getElementById('dashboard-screen').classList.remove('visible');
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('admin-key-input').value = '';
+  }
+
+  function setLoginError(msg) {
+    document.getElementById('login-error').textContent = msg;
+  }
+
+  // ── BOOT ──────────────────────────────────────────────────────────────────
+
+  (async function boot() {
+    const saved = sessionStorage.getItem(SESSION_KEY);
+    if (saved) {
+      const { ok } = await validateKey(saved).catch(() => ({ ok: false }));
+      if (ok) {
+        adminKey = saved;
+        showDashboard();
+        return;
+      }
+      sessionStorage.removeItem(SESSION_KEY);
+    }
+    // já está no login por padrão
+  })();
+
+  document.getElementById('admin-key-input')
+    .addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+
+  // ── DASHBOARD ─────────────────────────────────────────────────────────────
+
+  function showDashboard() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard-screen').classList.add('visible');
+    loadAll();
+  }
+
+  function loadAll() {
+    loadStats();
+    loadUnanswered();
+    loadNegative();
+  }
+
+  // ── FILTER ────────────────────────────────────────────────────────────────
+
+  function buildFilterParams(extra = '') {
+    const p = new URLSearchParams();
+    if (filterFrom) p.set('from', filterFrom);
+    if (filterTo)   p.set('to',   filterTo);
+    if (extra) {
+      const ep = new URLSearchParams(extra);
+      ep.forEach((v, k) => p.set(k, v));
+    }
+    return p.toString() ? '?' + p.toString() : '';
+  }
+
+  function applyFilter() {
+    filterFrom = document.getElementById('f-from').value;
+    filterTo   = document.getElementById('f-to').value;
+    state.unans.offset = 0;
+    state.neg.offset   = 0;
+    loadAll();
+  }
+
+  function setQuick(range) {
+    const now  = new Date();
+    const pad  = (n) => String(n).padStart(2, '0');
+    const fmt  = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    const today = fmt(now);
+
+    if (range === 'today') {
+      filterFrom = today; filterTo = today;
+    } else if (range === 'week') {
+      const start = new Date(now);
+      start.setDate(now.getDate() - now.getDay());
+      filterFrom = fmt(start); filterTo = today;
+    } else if (range === 'month') {
+      filterFrom = `${now.getFullYear()}-${pad(now.getMonth()+1)}-01`;
+      filterTo = today;
+    } else {
+      filterFrom = ''; filterTo = '';
+    }
+
+    document.getElementById('f-from').value = filterFrom;
+    document.getElementById('f-to').value   = filterTo;
+    state.unans.offset = 0;
+    state.neg.offset   = 0;
+    loadAll();
+  }
+
+  // ── API ───────────────────────────────────────────────────────────────────
+
+  async function apiFetch(path) {
+    const res = await fetch(path, { headers: { 'x-admin-key': adminKey } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }
+
+  // ── STATS ─────────────────────────────────────────────────────────────────
+
+  async function loadStats() {
+    const qs = buildFilterParams();
+    try {
+      const s = await apiFetch(`/api/admin/stats${qs}`);
+
+      set('s-conv',  fmt(s.totalConversations));
+      set('s-msgs',  fmt(s.totalUserMessages));
+
+      const unansEl = document.getElementById('s-unans');
+      unansEl.textContent = fmt(s.totalUnanswered);
+      unansEl.className   = 'stat-value ' + (s.unansweredRatePercent > 20 ? 'red' : s.unansweredRatePercent > 10 ? 'yellow' : '');
+      set('s-unans-rate', `${s.unansweredRatePercent}% das perguntas`);
+
+      const satEl  = document.getElementById('s-sat');
+      satEl.textContent = s.feedback.satisfactionRatePercent > 0
+        ? `${s.feedback.satisfactionRatePercent}%`
+        : '—';
+      satEl.className = 'stat-value ' + (s.feedback.satisfactionRatePercent >= 70 ? 'green' : s.feedback.satisfactionRatePercent > 0 ? 'yellow' : '');
+      set('s-sat-sub', `${fmt(s.feedback.positive)} 👍  ${fmt(s.feedback.negative)} 👎`);
+    } catch (err) {
+      showToast('Erro ao carregar stats.', true);
+    }
+  }
+
+  // ── UNANSWERED ────────────────────────────────────────────────────────────
+
+  async function loadUnanswered() {
+    const qs = buildFilterParams(`limit=${PAGE_SIZE}&offset=${state.unans.offset}`);
+    try {
+      const data = await apiFetch(`/api/admin/unanswered${qs}`);
+      state.unans.total = data.total;
+      set('badge-unans', fmt(data.total));
+
+      const tbody = document.getElementById('tbody-unans');
+      if (!data.items.length) {
+        tbody.innerHTML = emptyRow(3, 'Nenhuma pergunta sem resposta no período');
+        hidePag('unans');
+        return;
+      }
+
+      tbody.innerHTML = data.items.map(r => `
+        <tr>
+          <td class="cell-date">${fmtDate(r.createdAt)}</td>
+          <td class="cell-text">${esc(r.question)}</td>
+          <td class="cell-id">${r.conversationId ? r.conversationId.slice(0,8) + '…' : '—'}</td>
+        </tr>
+      `).join('');
+
+      renderPag('unans');
+    } catch {
+      document.getElementById('tbody-unans').innerHTML = errorRow(3);
+      hidePag('unans');
+    }
+  }
+
+  // ── NEGATIVE FEEDBACK ─────────────────────────────────────────────────────
+
+  async function loadNegative() {
+    const qs = buildFilterParams(`limit=${PAGE_SIZE}&offset=${state.neg.offset}`);
+    try {
+      const data = await apiFetch(`/api/admin/feedback/negative${qs}`);
+      state.neg.total = data.total;
+      set('badge-neg', fmt(data.total));
+
+      const tbody = document.getElementById('tbody-neg');
+      if (!data.items.length) {
+        tbody.innerHTML = emptyRow(3, 'Nenhum feedback negativo no período');
+        hidePag('neg');
+        return;
+      }
+
+      tbody.innerHTML = data.items.map(r => `
+        <tr>
+          <td class="cell-date">${fmtDate(r.createdAt)}</td>
+          <td class="cell-text">${esc(r.content)}</td>
+          <td class="cell-id">${r.conversationId.slice(0,8)}…</td>
+        </tr>
+      `).join('');
+
+      renderPag('neg');
+    } catch {
+      document.getElementById('tbody-neg').innerHTML = errorRow(3);
+      hidePag('neg');
+    }
+  }
+
+  // ── PAGINATION ────────────────────────────────────────────────────────────
+
+  function renderPag(key) {
+    const { offset, total } = state[key];
+    const pagEl = document.getElementById('pag-' + key);
+    pagEl.style.display = 'flex';
+
+    const start = offset + 1;
+    const end   = Math.min(offset + PAGE_SIZE, total);
+    set('pag-' + key + '-info', `${fmt(start)}–${fmt(end)} de ${fmt(total)}`);
+
+    document.getElementById('pag-' + key + '-prev').disabled = offset === 0;
+    document.getElementById('pag-' + key + '-next').disabled = end >= total;
+  }
+
+  function hidePag(key) {
+    document.getElementById('pag-' + key).style.display = 'none';
+  }
+
+  function pagePrev(key) {
+    state[key].offset = Math.max(0, state[key].offset - PAGE_SIZE);
+    key === 'unans' ? loadUnanswered() : loadNegative();
+  }
+
+  function pageNext(key) {
+    state[key].offset += PAGE_SIZE;
+    key === 'unans' ? loadUnanswered() : loadNegative();
+  }
+
+  // ── TABS ──────────────────────────────────────────────────────────────────
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+  }
+
+  // ── HELPERS ───────────────────────────────────────────────────────────────
+
+  function set(id, val) { document.getElementById(id).textContent = val; }
+
+  function fmt(n) { return Number(n).toLocaleString('pt-BR'); }
+
+  function fmtDate(iso) {
+    return new Date(iso).toLocaleString('pt-BR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  }
+
+  function esc(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function emptyRow(cols, msg) {
+    return `<tr><td colspan="${cols}">
+      <div class="empty-state"><p>${msg}</p></div>
+    </td></tr>`;
+  }
+
+  function errorRow(cols) {
+    return `<tr><td colspan="${cols}">
+      <div class="empty-state" style="color:var(--red)"><p>Erro ao carregar dados.</p></div>
+    </td></tr>`;
+  }
+
+  let toastTimer;
+  function showToast(msg, isError = false) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'show' + (isError ? ' error' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>

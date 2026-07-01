@@ -2,11 +2,6 @@ server {
     listen 80;
     server_name coffinho.coffeetecnologia.com;
 
-    # Rotas admin bloqueadas publicamente — acessar só via rede interna
-    location /api/admin/ {
-        deny all;
-    }
-
     location / {
         proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
