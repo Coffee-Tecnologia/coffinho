@@ -1,217 +1,85 @@
-# Orçamentos (Pedidos de Venda) - Apollo
-
-## Visão Geral
-O módulo de **Orçamentos** do Apollo gerencia propostas comerciais enviadas a clientes. Um orçamento pode conter produtos e/ou serviços, ser compartilhado com o cliente via link público e ter seu status atualizado conforme a resposta do cliente.
-
----
-
-## 1. Criação de Orçamento
-
-**Responsável:** Usuário (vendedor/comercial)
-
-Para criar um orçamento:
-1. Acesse o módulo Orçamentos
-2. Clique em **"Novo Orçamento"**
-3. Preencha os dados:
-   - **Cliente:** vinculado obrigatoriamente a um cliente cadastrado
-   - **Número:** gerado automaticamente (sequencial)
-   - **Itens:** produtos e/ou serviços com quantidade e preço unitário
-   - **Desconto:** percentual ou valor fixo (opcional)
-   - **Validade:** data de expiração da proposta
-   - **Observações**
-
-⚠️ O sistema sugere automaticamente o próximo número disponível.
-
----
-
-## 2. Itens do Orçamento
-
-Cada item pode ser:
-
-### Produto
-- Produto do cadastro, com preço unitário e quantidade
-
-### Serviço
-- Serviço do cadastro, com preço unitário e quantidade
-- **Opção "Incluir materiais":** quando ativada, o custo dos materiais vinculados ao serviço é somado ao total do item automaticamente
-
-O total de cada item é calculado como: `quantidade × preço_unitário` + custo de materiais (se habilitado).
-
----
-
-## 3. Desconto
-
-Pode ser aplicado sobre o total do orçamento:
-- **Percentual:** desconto em %
-- **Valor fixo:** desconto em R$
-
-O sistema calcula e exibe o valor total com desconto.
-
----
-
-## 4. Status do Orçamento
-
-| Status | Descrição |
-|--------|-----------|
-| `UNDER_REVIEW` | Em análise / Aguardando resposta do cliente |
-| `APPROVED` | Aprovado pelo cliente |
-| `DECLINED` | Recusado pelo cliente |
-
-O status inicial é sempre **`UNDER_REVIEW`**.
-
----
-
-## 5. Atualização de Status
-
-**Via interface interna:**
-`PATCH /budgets/{id}/status?status=APPROVED`
-
-O usuário pode atualizar o status manualmente após receber feedback do cliente.
-
-**Via link público (cliente responde diretamente):**
-O cliente acessa o link, visualiza o orçamento e aprova ou recusa.
-
----
-
-## 6. Link Público para o Cliente
-
-O Apollo permite gerar um **link público** do orçamento para enviar ao cliente:
-
-`POST /budgets/{id}/public-link`
-
-O cliente acessa o link sem precisar de login e pode:
-- Visualizar todos os itens, valores e totais
-- **Aprovar** o orçamento (`POST /budgets/public/{token}/approve`)
-- **Recusar** o orçamento (`POST /budgets/public/{token}/reject`)
-
-Quando o cliente responde pelo link, o status é atualizado automaticamente no Apollo.
-
----
-
-## 7. Duplicar Orçamento
-
-Para criar um novo orçamento a partir de um existente:
-
-`POST /budgets/{id}/create-from`
-
-Útil para reutilizar itens de orçamentos anteriores com ajustes mínimos.
-
----
-
-## 8. Relatórios
-
-### PDF
-`GET /budgets/{id}/report/pdf`
-
-Gera o PDF do orçamento com:
-- Dados do cliente
-- Listagem de itens com valores
-- Desconto e total geral
-- Validade (data de vencimento)
-
-Também disponível via link público: `GET /budgets/public/{token}/report/pdf`
-
-### Excel (XLSX)
-`GET /budgets/{id}/report/xlsx`
-
-Exporta o orçamento em planilha.
-
----
-
-## 9. Dashboard de Orçamentos
-
-`GET /budgets/dashboard`
-
-Retorna métricas da empresa:
-- Total de orçamentos por status
-- Valor total em análise, aprovado, recusado
-- Evolução no período
-
----
-
-## Fluxograma Resumido
-
-```
-[Usuário] Cria orçamento com itens
-    ↓ status: UNDER_REVIEW
-[Usuário] Envia link público ao cliente
-    ↓
-[Cliente] Acessa link e visualiza proposta
-    ↓
-    ├─→ APROVADO → status: APPROVED
-    │      ↓
-    │   [Usuário] Segue com processo de venda
-    │
-    └─→ RECUSADO → status: DECLINED
-           ↓
-        [Usuário] Pode criar novo orçamento revisado
-```
-
----
-
-## Regras de Negócio Importantes
-
-### 1. Cliente Obrigatório
-- ✅ Todo orçamento precisa de um cliente vinculado
-- ❌ Não é possível salvar sem cliente
-
-### 2. Número Automático
-- ✅ O sistema gera o próximo número disponível automaticamente
-- ✅ Evita duplicidade de numeração
-
-### 3. Link Público
-- ✅ Cada orçamento tem um token único para acesso público
-- ✅ O cliente não precisa de login para visualizar e responder
-- ✅ Qualquer pessoa com o link pode aprovar/recusar
-- ⚠️ Compartilhe apenas com o cliente destinatário
-
-### 4. Materiais de Serviços
-- ✅ Ao incluir materiais, o sistema soma automaticamente o custo dos insumos vinculados ao serviço
-- ✅ Útil para orçamentos de serviços com materiais inclusos
-
-### 5. Validade
-- ✅ Orçamento pode ter data de validade
-- ⚠️ Após a validade, o orçamento pode ser gerado com data marcada no PDF
-
----
-
-## Perguntas Frequentes
-
-### Como envio o orçamento para o cliente?
-Gere o link público do orçamento (`POST /budgets/{id}/public-link`), copie o link e envie por e-mail, WhatsApp ou outro canal.
-
-### O cliente aprovou mas não consigo alterar o status. Por quê?
-Se o cliente respondeu pelo link público, o status já foi atualizado automaticamente. Verifique se o orçamento está como `APPROVED`.
-
-### Posso criar um orçamento parecido com um já existente?
-Sim. Use a opção "Duplicar" (criar a partir de). O sistema copia todos os itens do orçamento original.
-
-### Como incluir o custo de materiais de um serviço no orçamento?
-Ao adicionar um item de serviço, marque a opção "Incluir materiais". O sistema somará automaticamente o custo dos insumos vinculados ao serviço.
-
-### Como gero o PDF do orçamento?
-Na tela do orçamento, clique em "Gerar PDF" ou acesse `GET /budgets/{id}/report/pdf`.
-
-### O que acontece se o cliente recusar o orçamento?
-O status muda para `DECLINED`. Você pode criar um novo orçamento revisado usando "Duplicar" e enviando novamente.
-
----
-
-## Glossário
-
-- **Orçamento (Budget):** proposta comercial enviada a um cliente
-- **Item:** produto ou serviço incluído no orçamento
-- **Desconto:** redução aplicada ao total (percentual ou valor fixo)
-- **Validade:** data limite para o cliente responder ao orçamento
-- **Link público:** URL única que permite ao cliente visualizar e responder sem login
-- **Token:** identificador único do link público do orçamento
-- **Materiais inclusos:** custo dos insumos vinculados a um serviço, somado ao orçamento
-- **UNDER_REVIEW:** em análise / aguardando resposta
-- **APPROVED:** aprovado pelo cliente
-- **DECLINED:** recusado pelo cliente
-- **Dashboard:** painel com métricas e totais dos orçamentos
-
----
-
-**Última atualização:** Junho 2026
-**Versão do documento:** 1.0
+# Orçamentos - Apollo
+
+Atualizado em 03/11/2026
+
+**Só na nuvem** (empresas sem Protheus). O orçamento é uma proposta comercial criada no Apollo, com produtos e/ou serviços, enviada ao cliente por PDF, planilha ou link público. Não confunda com **Pedidos de Venda**, que vêm do Protheus.
+
+Menu: **"Orçamentos"** (item próprio no menu lateral). O resumo dos orçamentos fica na aba **"Orçamentos"** da Home: taxa de conversão, em análise, ticket médio e valor em aberto.
+
+## Status
+| Status | Significado |
+|---|---|
+| Em análise | Status inicial; aguardando resposta do cliente |
+| Aprovado | Cliente aprovou |
+| Declinado | Cliente recusou |
+
+As abas da tela são Todos, Em análise, Aprovados e Declinados, com contagem. Só dá para editar um orçamento enquanto ele está "Em análise".
+
+## Como criar um orçamento
+1. Menu **Orçamentos** → **"Criar Orçamento"**.
+2. Preencha:
+   - "Número": gerado sozinho, no formato data + sequência;
+   - "Cliente" (obrigatório): precisa estar cadastrado em Cadastros › Clientes;
+   - "Referência" (opcional, até 50 caracteres): um texto para identificar o orçamento, como obra ou projeto.
+3. **"Adicionar item"**: escolha produto ou serviço, informe a quantidade e o "Preço unitário". Para produto, a **"Unidade de medida"** é obrigatória. Use "Adicionar" (continua no modal) ou "Adicionar e fechar".
+4. Desconto (opcional): escolha o "Tipo de desconto" ("Percentual" ou "Valor"), preencha o "Valor do desconto" e clique em "Aplicar".
+5. Clique em **"Salvar"**. Aparece "Orcamento cadastrado".
+
+O orçamento **não tem** campo de validade nem de observações. A validade é escolhida na hora de gerar o PDF ou a planilha (veja abaixo).
+
+### Serviço com materiais vinculados
+Se o serviço tiver materiais cadastrados, abre o aviso **"Materiais vinculados"**:
+- **"Sim, incluir materiais"**: os materiais entram como **itens separados**, com a quantidade multiplicada pela quantidade do serviço;
+- **"Não"**: só o serviço entra.
+
+O custo dos materiais **não** é somado ao preço do serviço.
+
+### Item repetido
+Se você adicionar um item que já está na lista, abre "Item já adicionado" com a opção **"Incrementar quantidade"**. O mesmo item não pode aparecer duas vezes.
+
+## Como criar a partir de outro orçamento
+**"Criar a partir de"** → pesquise o orçamento ("Pesquisar orçamento" → "Buscar") → selecione → **"Criar"**. Abre um orçamento novo com os mesmos dados, para você ajustar e salvar.
+
+## Como gerar PDF ou planilha
+Na coluna **"Download"** da linha:
+- **"Relatório em PDF"** ou **"Relatório em CSV"** (gera um arquivo XLS). O Apollo pergunta "Deseja adicionar uma data de validade ao orçamento?". Escolha "Gerar sem validade" ou informe a "Data de validade" e clique em "Gerar com validade".
+- **"Espelho da nota"**: PDF com o espelho da nota do orçamento.
+
+## Como enviar ao cliente por link
+1. Menu da linha → **"Gerar link público"**.
+2. Clique em **"Copiar link público"** e envie o link ao cliente.
+3. O cliente abre o link e escolhe **"Aprovar Orçamento"** ou **"Rejeitar Orçamento"**. Ele também pode baixar o PDF ou o Excel. O status muda sozinho.
+
+- Cada link vale **48 horas** e serve para **uma única resposta**. Depois disso, gere outro link.
+- O link é aberto sem login.
+
+## Como mudar o status manualmente
+Menu da linha → **"Atualizar Status"** → escolha o "Novo status" → "Salvar". Para "Aprovado", a tela pede "Numero NF" e "Recebimento". Hoje esses dois campos ainda não ficam gravados no orçamento.
+
+## Outros
+- **"Visualizar"** (menu da linha): mostra o orçamento completo.
+- Filtros: "Data de criação", "Identificador" e "Referência".
+- **"Enviar por e-mail" ainda não está disponível.** O item aparece no menu, mas não envia nada. Para mandar ao cliente, use o link público ou o PDF.
+
+## Quem pode
+Usuários com a permissão de orçamentos (BUDGE) ou administradores da empresa. Se o menu não aparece, peça ao administrador da sua empresa.
+
+## Problemas comuns (mensagens reais)
+| Mensagem | O que fazer |
+|---|---|
+| "Cliente é obrigatório" | Selecione um cliente; cadastre-o antes em Cadastros › Clientes, se precisar. |
+| "Selecione um produto ou serviço para cada item" | Algum item ficou sem produto ou serviço. |
+| "Item duplicado no orçamento: …" | Remova o item repetido ou aumente a quantidade do existente. |
+| "O desconto percentual não pode ser maior que 100%" / "Desconto percentual não pode ser maior que 100" | Use um percentual entre 0 e 100. |
+| "O desconto não pode ser maior que o total (…)" | Diminua o desconto. |
+| "Referência deve ter no máximo 50 caracteres" | Encurte a referência. |
+| "Token público expirado" (cliente) | O link passou de 48 h. Gere um link novo. |
+| "Token público já utilizado" (cliente) | O cliente já respondeu por esse link. Gere outro, se for preciso. |
+| "Não foi possível gerar link público" | Tente de novo; se persistir, fale com o suporte. |
+
+## Perguntas frequentes
+- **Onde coloco a validade?** Na hora de gerar o PDF ou o CSV ("Gerar com validade").
+- **Como duplico um orçamento?** Use "Criar a partir de".
+- **Posso editar um orçamento aprovado?** Não. A edição só é possível com o status "Em análise".
+- **O cliente diz que o link não abre.** O link expira em 48 h e só aceita uma resposta. Gere um novo.
+- **Tenho Protheus e não vejo Orçamentos.** Orçamentos existem só na nuvem. No Protheus, use Pedidos de Venda.

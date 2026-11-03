@@ -1,151 +1,70 @@
-# Caixa Geral (MasterBox) - Apollo
+# Caixa Geral - Apollo
 
-## Visão Geral
-O **Caixa Geral** (MasterBox) é o módulo de controle do fluxo de caixa geral da empresa no Apollo. Registra todas as entradas e saídas financeiras, permitindo acompanhar o saldo atual, gerar relatórios e efetuar baixas de provisões.
+Atualizado em 03/11/2026
 
----
+O **Caixa Geral** registra as entradas e saídas do caixa principal da empresa e mostra o saldo. Existe tanto em empresas com Protheus quanto na nuvem.
 
-## 1. O que é uma Entrada no Caixa Geral?
+Menu: **Documentos › Caixa geral**.
 
-Cada lançamento (entrada ou saída) contém:
-- **Número:** identificador sequencial do lançamento
-- **Descrição:** descrição do movimento
-- **Fornecedor/Origem:** quem originou o movimento
-- **Valor:** valor do item
-- **Total:** valor total calculado
-- **Data de emissão**
-- **Tipo de transação (transactionType):** entrada ou saída
-- **PSC (psc):** status de provisão — `PENDING` ou `CLEARED`
-- **Data de baixa (discharge_date):** quando foi baixado/compensado
-- **Observação**
-- **Saldo anterior (previous_total):** saldo antes deste lançamento
-- **Sequência:** ordem dos lançamentos na data
+Todo lançamento é feito à mão. Nenhum outro módulo (Financeiro, Caixinha, Pedidos) cria lançamento no Caixa Geral automaticamente.
 
 ---
 
-## 2. Consulta e Filtros
+## O que aparece na tela
+- **Cards do topo**: "Saldo Atual do Caixa", "Total Entradas", "Total Saídas" e "Total de Movimentos". O card de saldo mostra também a variação em relação ao mês anterior.
+- **Abas**: "Todos", "Entradas" e "Saídas".
+- **Filtros**: busca livre e os chips "Emissão" e "Baixa" (período).
+- **Colunas**: Número, Emissão, Fornecedor, Tipo de movimento, Valor, "Saldo anterior", Saldo, "Prestação de Contas", Baixa, Observação e Anexo.
 
-O caixa geral pode ser consultado por:
-- Período (data de emissão)
-- Tipo de transação
-- Status de provisão (PSC)
-- Fornecedor
+Os lançamentos ficam em ordem de emissão. Cada linha mostra o saldo antes e depois do movimento.
 
-A listagem retorna os lançamentos ordenados por **data de emissão + sequência** e inclui o **total acumulado** do período.
+## Como lançar uma entrada ou saída
+1. Em **Documentos › Caixa geral**, clique em "Novo".
+2. Preencha:
+   - "Número", "Descrição", "Fornecedor", "Data de emissão" e "Valor" (obrigatórios);
+   - "Tipo de movimento": Entrada ou Saída;
+   - "Prestação de Contas": "Pendente" ou "Finalizado";
+   - "Data da baixa": obrigatória quando a Prestação de Contas é "Finalizado";
+   - "Observação" (opcional).
+3. Clique em "Salvar".
 
----
+Uma saída maior que o saldo atual é bloqueada. O caixa não pode ficar negativo.
 
-## 3. Saldo Atual
+## Como dar baixa na prestação de contas
+Um lançamento com Prestação de Contas "Pendente" é um movimento que ainda precisa ser comprovado ou compensado.
+1. No menu da linha, clique em **"Baixar"**.
+2. Informe a data da baixa e confirme. A data não pode ser futura.
+3. A Prestação de Contas passa para "Finalizado". **A baixa não pode ser desfeita.**
 
-**Endpoint:** `GET /master-box/current-amount`
+## Como exportar o caixa
+No cabeçalho, clique em **"Exportar"** e escolha "Exportar PDF" ou "Exportar XLS". A exportação usa os filtros aplicados na tela. Não existe uma tela de relatório separada.
 
-Retorna o saldo atual do caixa da empresa. O sistema percorre todos os lançamentos e calcula o saldo corrente.
-
----
-
-## 4. Recalcular Saldo
-
-Caso haja inconsistência no saldo (ex.: lançamentos importados fora de ordem), é possível acionar o **Recalcular** (`POST /master-box/recalculate`). O sistema recalcula todos os saldos sequencialmente.
-
-⚠️ **Use com cautela:** reprocessa todos os registros da empresa.
-
----
-
-## 5. Baixa de Provisão (PSC Discharge)
-
-Lançamentos do tipo **provisão (PSC = PENDING)** precisam ser baixados quando a movimentação financeira é confirmada.
-
-**Ação:** `PUT /master-box/{id}/discharge/{dischargeDate}`
-
-- PSC muda de `PENDING` → `CLEARED`
-- Data de baixa é registrada
+## Como corrigir o saldo (Recálculo)
+Se o saldo parecer errado (por exemplo, depois de lançamentos com data antiga), clique em **"Recálculo"** no cabeçalho. O Apollo recalcula, em sequência, o saldo de todos os lançamentos da empresa. Pode demorar se houver muitos lançamentos.
 
 ---
 
-## 6. Relatório
+## Quem pode
+Administradores da empresa (ADMIN_BASIC, ADMIN_PROTHEUS) e usuários com a permissão MASTER_BOX. Se você não vê o Caixa geral no menu, peça ao administrador da sua empresa.
 
-**Endpoint:** `GET /master-box/report` (retorna PDF)
+## Perguntas frequentes
+**Onde vejo o saldo atual?**
+No card "Saldo Atual do Caixa", no topo da tela.
 
-Gera relatório de caixa geral com filtros aplicados, incluindo:
-- Listagem de lançamentos do período
-- Totais e saldo
+**Como filtro só as saídas?**
+Use a aba "Saídas". Para um período, use os chips "Emissão" ou "Baixa".
 
----
+**O que é "Prestação de Contas"?**
+Indica se o movimento já foi comprovado: "Pendente" quer dizer que falta dar baixa; "Finalizado" quer dizer que já foi baixado.
 
-## Fluxograma Resumido
+**Errei um lançamento. Posso excluir?**
+Ainda não há exclusão de lançamento no Caixa Geral. Faça um lançamento de ajuste (Entrada ou Saída) com uma observação explicando a correção.
 
-```
-[Usuário/Sistema] Registra lançamento
-    ↓
-[Apollo] Calcula saldo acumulado
-    ↓
-Lançamento fica com PSC = PENDING (se for provisão)
-    ↓
-[Financeiro] Confirma movimentação
-    ↓
-[Apollo] Baixa PSC → status CLEARED
-    ↓
-✅ Lançamento finalizado
-```
+**O pagamento aprovado no Financeiro entra aqui?**
+Não. O Caixa Geral não recebe lançamentos automáticos.
 
----
-
-## Status de Provisão (PSC)
-
-| Status | Descrição |
-|--------|-----------|
-| `PENDING` | Provisão ainda não compensada |
-| `CLEARED` | Baixada / compensada |
-
----
-
-## Regras de Negócio Importantes
-
-### 1. Sequência de Lançamentos
-- ✅ Lançamentos na mesma data são ordenados por sequência
-- ✅ O saldo anterior de cada lançamento reflete o saldo após o item anterior
-
-### 2. Recalcular
-- ✅ Disponível quando o saldo está inconsistente
-- ⚠️ Reprocessa todos os lançamentos da empresa
-
-### 3. Baixa PSC
-- ✅ Requer data de baixa
-- ✅ Provisões não baixadas aparecem como `PENDING`
-- ❌ Baixa não pode ser desfeita pelo fluxo padrão
-
----
-
-## Perguntas Frequentes
-
-### Como consulto o saldo atual do caixa?
-Acesse o módulo Caixa Geral. O saldo atual é exibido no topo, calculado com base em todos os lançamentos registrados.
-
-### O saldo está errado, o que faço?
-Acione o botão "Recalcular" no Caixa Geral. O sistema recalculará todos os saldos em sequência.
-
-### O que é PSC / Provisão?
-PSC é um lançamento provisório — registrado antes da confirmação financeira. Quando o movimento é confirmado, o status muda para `CLEARED` (baixado).
-
-### Como gero o relatório do caixa?
-Acesse "Relatório" no Caixa Geral, filtre o período desejado e clique em "Gerar PDF".
-
-### Posso filtrar por tipo de lançamento (entrada/saída)?
-Sim, utilize o filtro de "Tipo de Transação" na listagem.
-
----
-
-## Glossário
-
-- **MasterBox:** módulo de caixa geral
-- **PSC (Provisão):** lançamento pendente de confirmação financeira
-- **PENDING:** provisão ainda não baixada
-- **CLEARED:** provisão baixada/compensada
-- **Discharge:** baixa da provisão, confirmando o movimento financeiro
-- **Recalcular:** reprocessar todos os saldos do caixa
-- **Saldo anterior (previous_total):** saldo do caixa imediatamente antes do lançamento
-
----
-
-**Última atualização:** Junho 2026
-**Versão do documento:** 1.0
+## Problemas comuns
+- **"Saldo do caixa não pode ficar negativo."**: a saída é maior que o saldo. Lance antes a entrada correspondente ou revise o valor.
+- **"Você não pode informar uma data futura para a baixa."**: use a data de hoje ou uma data passada.
+- **"Erro ao realizar recálculo!"**: tente de novo. Se o erro continuar, fale com o suporte.
+- **"Erro ao gerar relatório PDF!"**: confira os filtros (um período muito grande pode falhar) e tente de novo.

@@ -1,239 +1,105 @@
 # Pedidos de Compra - Apollo
 
-## Visão Geral
-O módulo de **Pedidos de Compra** do Apollo gerencia o ciclo completo de pedidos de compra, desde a sincronização com o sistema externo (Protheus) até o pagamento final. O pedido passa por três etapas de aprovação: **Fiscal**, **Financeiro** e **Financeiro (Baixa)**.
+Atualizado em 03/11/2026
 
----
+**Só para empresas com Protheus.** Os pedidos de compra nascem no Protheus. O Apollo não cria pedidos; ele traz os pedidos para o Apollo e controla a conferência deles até o financeiro. Empresas só na nuvem não têm esta tela; elas usam "A pagar" (Documentos › A pagar).
 
-## 1. Origem dos Pedidos
+## Quem faz o quê (três telas)
 
-Os pedidos de compra podem ser criados de duas formas:
+| Etapa | Quem | Onde |
+|---|---|---|
+| 1. Preparar e enviar | Solicitante / comprador | **Documentos › Pedidos** |
+| 2. Conferência fiscal | Fiscal | **Fiscal › Pedidos** |
+| 3. Aprovação do título | Financeiro | **Financeiro › Documentos** |
 
-### A) Sincronização com o Protheus
-1. Usuário acessa o Apollo
-2. Clica em **"Sincronizar"** (`POST /pedidos-compras/synchronize-purchase-order`)
-3. Apollo busca pedidos no Protheus vinculados ao **código do usuário**
-4. Pedidos são importados e ficam com:
-   - `status: pending`
-   - `billingStatus: waiting`
-   - `financialStatus: waiting`
+O pedido termina quando o financeiro aprova o título gerado na etapa 2.
 
-⚠️ **IMPORTANTE:** O código do usuário no Protheus é obrigatório no cadastro. Sem ele, a sincronização não traz pedidos.
+## Como trazer meus pedidos do Protheus
+1. Menu **Documentos › Pedidos**.
+2. Clique em **"Sincronizar"**, no topo da tela.
+3. O Apollo traz os pedidos em aberto do Protheus que pertencem ao seu usuário no Protheus.
 
-### B) Sincronização Automática (Cron)
-O sistema pode sincronizar automaticamente via `POST /pedidos-compras/synchronize-by-cron`.
+- Sem o código de usuário do Protheus no seu cadastro do Apollo, nada é trazido. Peça ao administrador da sua empresa para preencher.
+- Quem cuida só de materiais vê só os pedidos de material.
+- Pedido excluído, eliminado por resíduo ou já totalmente entregue no Protheus some do Apollo na sincronização seguinte.
 
----
+## Como preparar o pedido (solicitante)
+Em **Documentos › Pedidos**, abra o menu da linha do pedido:
+1. **"Atualizar"** abre "Atualizar pedido", com estes campos:
+   - "Primeiro vencimento" (obrigatório);
+   - "Espécie" (obrigatório);
+   - "Emissão da NF" (obrigatório): informe a data **ou** marque "Não tenho a nota". Quando a nota for lançada no Protheus, a data é preenchida sozinha. A data não pode ser futura;
+   - "Forma de pagamento" (obrigatório);
+   - "Replicar informações para todos os itens do pedido?": Sim aplica os dados a todos os itens do mesmo pedido;
+   - "Observação do pedido" ou "Acrescentar observação".
 
-## 2. Preparação do Pedido (Usuário/Solicitante)
+   Clique em "Salvar".
+2. Na coluna **"Anexo"**, anexe a nota ou o comprovante. O anexo é obrigatório.
 
-Após sincronizado, o solicitante deve:
-1. Anexar documentos (nota fiscal, boleto, etc.)
-2. Informar data de vencimento
-3. Adicionar informações complementares
-4. Enviar ao Fiscal
+## Como enviar um pedido ao fiscal
+1. Menu da linha → **"Enviar ao Fiscal"** (ou o botão "Enviar" da linha).
+2. Escolha uma das abas:
+   - **"Enviar item"**: responda "Pedido **parcialmente** atendido?" (Sim/Não) e, se quiser, escreva uma observação.
+   - **"Enviar pedido"**: envia vários itens; selecione os itens parcialmente atendidos.
+3. Clique em "Sim". A mensagem "Pedido enviado com sucesso" confirma o envio.
 
-⚠️ **REGRA:** Sem documentos, o fiscal pode rejeitar o pedido.
+O parcial é marcado por **quem envia**, não pelo fiscal.
 
----
+### Por que o botão "Enviar ao Fiscal" está desabilitado?
+O botão só libera com **anexo + primeiro vencimento + espécie**. Passando o mouse, aparece "Falta informações" (falta algum desses) ou "Pedido finalizado" (já foi enviado). Use "Atualizar" e a coluna "Anexo" para completar.
 
-## 3. Análise Fiscal (Billing)
+## Conferência fiscal (fiscal)
+Menu **Fiscal › Pedidos**. As abas são Todos, Pendentes, Rejeitados Fin, Rejeitados Fis, Finalizados e Parcial. Os filtros são Filial, Espécie, Solicitante, Vencimento, F. pagamento, Recebido em e Emissão NF. Na coluna "Emissão NF", "Sem nota" quer dizer que o solicitante marcou "Não tenho a nota".
 
-**Responsável:** Fiscal / Contábil
+- **"Aprovar"**: pede só uma observação opcional. Ao aprovar, o Apollo busca no Protheus a nota de entrada e o título a pagar, e o pedido segue para o Financeiro.
+- **"Reprovar"**: a "Observação" é obrigatória. O pedido volta ao solicitante (aba "Rejeitados" dele, e "Rejeitados Fis" no fiscal). O solicitante recebe um e-mail.
+- "Aprovar" fica desabilitado quando o pedido já foi aprovado pelo fiscal ou ainda não foi enviado.
+- "Parcial" é só uma aba de filtro: mostra os pedidos que o solicitante enviou como parcialmente atendidos.
 
-O fiscal analisa o pedido e pode:
+## Aprovação no financeiro
+Menu **Financeiro › Documentos**. Aqui aparecem os **títulos a pagar** gerados pela aprovação fiscal, e não os pedidos. As abas são Todos, Pendentes e Finalizados.
+- **"Aprovar"**: o pedido fica finalizado no financeiro. Fim do fluxo.
+- **"Reprovar"**: o pedido volta para o **Fiscal**, na aba "Rejeitados Fin". Não volta para o solicitante.
 
-### Opção A: Aprovar
-- `status` → `finished` (ou `partial_served` se atendimento parcial)
-- `billingStatus` → `pending`
-- Pedido segue para o Financeiro
+## Como acompanhar meu pedido
+- A coluna "Status" mostra um ícone por etapa. Passe o mouse para ver, por exemplo, "Pendente fiscal" ou "Finalizado - financeiro".
+- Abas do solicitante: Todos, Pendentes, Rejeitados, Finalizados e Parcial.
+- **"Detalhes"** (menu da linha): mostra os dados do pedido, os status, as observações, os "Documentos vinculados" (títulos) e o "Histórico".
+- **"Info Envio"**: mostra o que foi informado no envio (só depois de enviado).
 
-### Opção B: Reprovar
-- `status` → `rejected`
-- `billingStatus` → `waiting`
-- `financialStatus` → `waiting`
-- **Obrigatório:** informar observação de reprovação
-- Pedido volta ao solicitante para correção
+## Setores
+- Filtro **"Visão"**: "Meus pedidos" ou "Pedidos do setor". Filtro **"Setor"**: um setor específico. As colunas "Usuário" e "Setor" mostram de quem é cada pedido.
+- Você vê os pedidos do setor a que pertence ou a que tem acesso. Quem configura é o administrador ou o responsável pelo setor, em **Configuração › Setores**.
+- Se o dono do pedido mudar no Protheus, o pedido muda de setor junto, e isso aparece no Histórico.
 
----
+## Exportar
+O botão **"Exportar"**, no topo, tem três opções: "Exportar PDF", "Exportar XLS" e "Download anexos" (ZIP com no máximo 100 pedidos).
 
-## 4. Fluxo de Reprovação Fiscal
+## Quem pode
+- Solicitante: permissão de pedidos de compra (PURCHASE_ORDER) ou de materiais (MATERIALS).
+- Fiscal: ACCOUNTABILITY.
+- Financeiro: FINANCIAL.
 
-1. Pedido volta ao solicitante com `status: rejected`
-2. Observação do fiscal fica visível
-3. Solicitante corrige e reenvia ao fiscal
-4. Fiscal analisa novamente
+Os administradores Protheus da empresa veem tudo. Se faltar acesso, peça ao administrador da sua empresa.
 
-**Este ciclo se repete até aprovação.**
+## Problemas comuns (mensagens reais)
+| Mensagem | O que fazer |
+|---|---|
+| "O pedido X/Y está sem anexo." | Anexe o arquivo na coluna "Anexo" e envie de novo. |
+| "O pedido X/Y está bloqueado no Protheus." | O pedido não está liberado (aprovado) no Protheus. Peça a liberação no Protheus e tente de novo. |
+| "O pedido X/Y nao foi enviado, reveja espécie, vencimento, forma de pagamento." | Complete esses campos em "Atualizar". |
+| "O pedido X/Y, filial Z nao foi encontrado na origem." | O pedido foi excluído ou alterado no Protheus. Clique em "Sincronizar". |
+| "Informe a data de emissão da NF ou marque "Não tenho a nota"." | Preencha "Emissão da NF" ou marque a opção. |
+| "A data de emissão da NF não pode ser futura." | Corrija a data. |
+| "Não existe documento de entrada lançado para o documento X/Y" (fiscal) | A nota de entrada ainda não foi lançada no Protheus. Lance a nota e aprove de novo. |
+| "Aguardando atualização da pre-nota" (fiscal) | A pré-nota existe, mas ainda não foi classificada no Protheus. Classifique e tente de novo. |
+| "Nenhum título financeiro encontrado no Protheus para a nota…" (fiscal) | A nota não gerou título a pagar no Protheus. Verifique a nota no Protheus. |
+| "permitido no maximo 100 notas por download, teste novamente" | Filtre menos pedidos antes de "Download anexos". |
 
----
-
-## 5. Análise Financeira
-
-**Responsável:** Financeiro
-
-Após aprovação fiscal, o financeiro analisa o pedido:
-
-### Opção A: Aprovar (Baixa Financeira)
-- `billingStatus` → `finished`
-- `financialStatus` → `pending`
-- Pedido registra data de envio ao financeiro (`sendToFinancialAt`)
-- Pode gerar lançamento no Caixa Geral
-
-### Opção B: Reprovar
-- `billingStatus` → `waiting`
-- `financialStatus` → `waiting`
-- `status` → `rejected`
-- **Obrigatório:** informar observação
-
----
-
-## 6. Status do Pedido
-
-O pedido tem **três dimensões de status**:
-
-### `status` (status geral do pedido)
-| Valor | Descrição |
-|-------|-----------|
-| `pending` | Aguardando análise fiscal |
-| `finished` | Aprovado pelo fiscal |
-| `partial_served` | Atendimento parcial aprovado |
-| `rejected` | Reprovado (fiscal ou financeiro) |
-| `waiting` | Em espera |
-
-### `billingStatus` (status no fiscal)
-| Valor | Descrição |
-|-------|-----------|
-| `waiting` | Não chegou ao fiscal ainda |
-| `pending` | Em análise pelo fiscal |
-| `finished` | Fiscal aprovou |
-
-### `financialStatus` (status no financeiro)
-| Valor | Descrição |
-|-------|-----------|
-| `waiting` | Não chegou ao financeiro ainda |
-| `pending` | Em análise pelo financeiro |
-| `finished` | Financeiro aprovou/baixou |
-
----
-
-## 7. Documentos Vinculados
-
-Cada pedido pode ter documentos anexados:
-- Notas fiscais
-- Boletos
-- Comprovantes
-
-`GET /pedidos-compras/{id}/documentos` retorna os documentos vinculados.
-
----
-
-## 8. Relatórios e Exportação
-
-- **Relatório por status:** listagem de pedidos filtrada por status
-- **Relatório financeiro:** listagem por status financeiro
-- **ZIP de arquivos:** exportação em massa dos documentos anexados
-
----
-
-## Fluxograma Resumido
-
-```
-[Protheus] Pedido criado
-    ↓
-[Apollo] Usuário sincroniza → status: pending
-    ↓
-[Apollo] Usuário anexa documentos
-    ↓
-[Apollo] Envio ao Fiscal
-    ↓
-[Fiscal] Analisa pedido
-    ↓
-    ├─→ APROVADO
-    │      status: finished | billingStatus: pending
-    │      ↓
-    │   [Financeiro] Analisa
-    │      ↓
-    │      ├─→ APROVADO (baixa) → financialStatus: pending
-    │      │      ↓
-    │      │   ✅ FINALIZADO → financialStatus: finished
-    │      │
-    │      └─→ REPROVADO → status: rejected → volta ao usuário
-    │
-    └─→ REPROVADO
-           status: rejected
-           ↓
-        [Usuário] Corrige e reenvia
-           ↓
-        (volta ao Fiscal)
-```
-
----
-
-## Regras de Negócio Importantes
-
-### 1. Código do Usuário no Protheus
-- ✅ Obrigatório no cadastro do usuário
-- ❌ Sem código = não sincroniza pedidos
-
-### 2. Documentos Anexados
-- ✅ Documentos podem ser anexados em qualquer etapa
-- ✅ Fiscal pode exigir documentação para aprovar
-
-### 3. Observação na Reprovação
-- ✅ Obrigatória ao reprovar (fiscal ou financeiro)
-- ✅ Usuário vê o motivo da reprovação
-
-### 4. Atendimento Parcial
-- ✅ Fiscal pode aprovar parcialmente (`partial_served`)
-- ✅ Indica que apenas parte do pedido foi atendida
-
-### 5. Datas Importantes
-- `firstMaturity`: data do primeiro vencimento
-- `sendToBillingAt`: quando foi enviado ao fiscal
-- `sendToFinancialAt`: quando foi enviado ao financeiro
-- `lastMovimentDate`: última movimentação do pedido
-
----
-
-## Perguntas Frequentes
-
-### Como sincronizo meus pedidos de compra?
-Acesse o módulo Pedidos de Compra e clique em "Sincronizar". O sistema buscará automaticamente os pedidos vinculados ao seu código de usuário no Protheus.
-
-### Meu pedido foi reprovado. O que fazer?
-Verifique a observação deixada pelo fiscal (ou financeiro), corrija o problema apontado e reenvie para análise.
-
-### O que significa "atendimento parcial"?
-Significa que o fiscal aprovou apenas parte do pedido. Verifique quais itens foram atendidos e entre em contato com o fiscal para detalhes.
-
-### Como vejo os documentos anexados ao pedido?
-Na tela do pedido, acesse a aba de documentos ou clique em "Ver Documentos".
-
-### Posso filtrar pedidos por solicitante?
-Sim. Use o filtro "Solicitantes" disponível na listagem de pedidos.
-
-### Como exporto os documentos em massa?
-Use a funcionalidade "Gerar ZIP" na listagem de pedidos, aplicando os filtros desejados.
-
----
-
-## Glossário
-
-- **Protheus:** sistema ERP onde os pedidos são originados
-- **Sincronizar:** importar pedidos do Protheus para o Apollo
-- **Fiscal / Billing:** responsável pela análise contábil/fiscal dos pedidos
-- **Financeiro:** responsável pelo pagamento e baixa financeira
-- **Baixa:** confirmação de pagamento
-- **status:** situação geral do pedido
-- **billingStatus:** situação no processo fiscal
-- **financialStatus:** situação no processo financeiro
-- **Solicitante (requester):** quem criou/solicitou o pedido
-- **Comprador (buyer):** responsável pela compra no Protheus
-- **Vencimento (firstMaturity):** data do primeiro vencimento do pedido
-- **Atendimento parcial:** aprovação de apenas parte do pedido
-
----
-
-**Última atualização:** Junho 2026
-**Versão do documento:** 1.0
+## Perguntas frequentes
+- **Posso criar um pedido no Apollo?** Não. O pedido nasce no Protheus; depois use "Sincronizar".
+- **Meu pedido não aparece.** Clique em "Sincronizar". Confira se o seu código de usuário do Protheus está no seu cadastro e se o pedido está em aberto no Protheus. Confira também o filtro "Visão" e a aba selecionada.
+- **O financeiro reprovou. E agora?** O pedido está com o fiscal, na aba "Rejeitados Fin". O fiscal revisa e aprova de novo.
+- **O fiscal reprovou. E agora?** Leia a observação em "Detalhes", corrija (anexo ou dados em "Atualizar") e use "Enviar ao Fiscal" de novo.
+- **Quem decide se o pedido foi parcial?** O solicitante, na hora do envio.
+- **Existe sincronização automática?** Não. Use o botão "Sincronizar".

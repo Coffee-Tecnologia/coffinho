@@ -1,563 +1,224 @@
-# DFe (Documentos Fiscais Eletrônicos) - Apollo
+# Gestão Fiscal (DF-e) - Apollo
 
-## Visão Geral
-O módulo **DFe** do Apollo gerencia a recepção, consulta e manifestação de **NF-e (Nota Fiscal Eletrônica)** e **NFS-e (Nota Fiscal de Serviço Eletrônica)**. A empresa recebe notas fiscais eletrônicas emitidas por seus fornecedores diretamente da SEFAZ, sem depender de e-mail ou papel.
+Atualizado em 03/11/2026
 
----
+## O que é
+A **Gestão Fiscal** é o módulo que busca automaticamente na SEFAZ as notas emitidas contra o CNPJ da empresa (NF-e, CT-e e NFS-e), faz a manifestação das NF-e, acompanha certificados, certidões e fornecedores, e ajuda a fechar o mês. Funciona igual para empresas com Protheus e na nuvem.
 
-## NF-e — Nota Fiscal de Produtos
+Não confunda com o menu **Fiscal** (aprovação de pedidos e documentos, só para empresas com Protheus).
 
-### 1. Sincronização Automática (Distribuição DFe por NSU)
+## Menu
+Gestão Fiscal tem três grupos:
+- **Monitoramento:** "Visão Geral", "Certificados", "Regularidade" (certidões), "Fechamento mensal", "Fornecedores"
+- **Documentos:** "NF-e Recebidas", "NF-e Emitidas", "CT-e", "NFS-e Recebidas", "NFS-e Emitidas", "Emissão NFS-e"
+- **Análises:** "NF-e × EFD", "Estimativas", "Relatórios"
 
-**Como funciona:**
-- Apollo consulta a SEFAZ automaticamente via NSU (Número Sequencial Único) a cada ciclo
-- A SEFAZ retorna documentos novos em fila (tipo: resumo `resNFe` ou completo `procNFe`)
-- Notas novas são salvas automaticamente no banco
+Nomes antigos que o usuário pode usar: Resumo DFe = Visão Geral; Certidões = Regularidade; Situação dos Emitentes = Fornecedores; NF-e Entrada = NF-e Recebidas; NF-e Saída = NF-e Emitidas; Análise NF-e = NF-e × EFD; Estimativa Tributária = Estimativas.
 
-**Tipos de documento retornados:**
-| Schema | Tipo | Conteúdo |
-|--------|------|----------|
-| `resNFe_v1.01.xsd` | Resumo | Dados básicos + chave + situação |
-| `procNFe_v4.00.xsd` | Completo | XML integral da NF-e |
-| `procEventoNFe_v1.00.xsd` | Evento | Cancelamento, CCe, Desconhecimento |
-
-⚠️ **IMPORTANTE:** A sincronização só pode ser feita 1x por hora por empresa. Tentar antes retorna erro de cooldown.
+Cada item só aparece para quem tem acesso a ele.
 
 ---
 
-### 2. Consulta de Nota por Chave (Busca Manual)
+## Captura automática de documentos
+O Apollo busca os documentos sozinho, usando o certificado digital A1 da empresa. **Não existe botão "Sincronizar" nas telas de notas.**
+- NF-e recebidas: a cada hora, mais ou menos, das 5h às 23h.
+- NFS-e recebidas: a cada hora, mais ou menos, das 5h às 23h (só municípios do Padrão Nacional).
+- CT-e: de hora em hora, inclusive de madrugada.
 
-**Quando usar:** quando a nota não apareceu na sincronização normal.
+Para a captura funcionar, a empresa precisa de:
+1. Certificado A1 válido (Gestão Fiscal › Monitoramento › "Certificados").
+2. Captura ligada em Configuração › Empresas › (empresa) › card **"Captura de documentos"**: chave **"Captura automática"** e, em **"Quais documentos capturar"**, os tipos desejados (NF-e de entrada, NFS-e, CT-e).
 
-**Como funciona:**
-1. Usuário informa a chave de acesso da NF-e (44 dígitos)
-2. Apollo consulta a SEFAZ via `ConsultaDFeEnum.CHAVE`
-3. Se a SEFAZ retornar XML completo (`procNFe`), nota é salva com todos os dados
-4. Se retornar apenas resumo (`resNFe`), nota é salva com dados básicos e **status derivado do `cSitNFe`**:
-   - `cSitNFe = 1` → status `100` (Autorizada)
-   - `cSitNFe = 2` → status `110` (Denegada)
-   - `cSitNFe = 3` → status `101` (Cancelada)
+Sincronização manual: só existe em Configuração › Empresas (ação de sincronizar NF-e da empresa), para quem tem permissão. Só pode ser feita uma vez por hora.
 
----
+### Saúde da captura
+Em Configuração › Empresas, cada empresa mostra um chip por tipo de documento: verde (OK), âmbar (atenção), vermelho (falha), cinza (não monitorado) e riscado (desligado). Passe o mouse para ver a última captura. Filtros rápidos: "certificado vencendo/vencido", "captura pausada", "captura com falha".
 
-### 3. Status da NF-e
+Na Visão Geral a mesma informação aparece na coluna **"Captura"**:
+- **Falha:** nenhuma captura com sucesso há mais de 24 h, ou certificado vencido. A empresa fica com status "Pendência".
+- **Atenção:** sem sucesso há mais de 12 h, ou as duas últimas tentativas falharam. A empresa fica com status "Atenção".
 
-| Código | Significado | Pode Manifestar? |
-|--------|-------------|-----------------|
-| `100` | Autorizada | ✅ Sim |
-| `101` | Cancelada | ❌ Não |
-| `102` | Inutilizada | ❌ Não |
-| `110` | Denegada | ❌ Não |
-| `null` | Não consultado ainda | ❌ Não (aguardar consulta) |
-
-O status é atualizado automaticamente pelo scheduler `CheckStatus` (a cada ~100 min) via consulta individual à SEFAZ.
+Quando a SEFAZ acusa consumo indevido, a captura da NF-e pausa sozinha e volta em cerca de 3 horas. Não é preciso fazer nada.
 
 ---
 
-### 4. Manifestação do Destinatário
-
-**O que é:** o destinatário (empresa que recebe a nota) deve se manifestar perante a SEFAZ informando sua posição em relação à nota.
-
-**Tipos de manifestação:**
-
-| Tipo | Quando usar |
-|------|-------------|
-| `CIENCIA_DA_OPERACAO` | Tomou conhecimento da nota (não confirma entrega) |
-| `CONFIRMACAO_DA_OPERACAO` | Confirma que recebeu as mercadorias/serviços |
-| `DESCONHECIMENTO_DA_OPERACAO` | Não reconhece a operação |
-| `OPERACAO_NAO_REALIZADA` | Reconhece a nota mas a operação não ocorreu |
-
-**Regras para manifestar:**
-- ✅ A nota precisa ter **status `100`** (autorizada)
-- ✅ Prazo SEFAZ: até 90 dias após a emissão (prazo legal; verificar para `CIENCIA`)
-- ❌ Nota com manifestação finalística já registrada não pode ser manifestada novamente com o mesmo tipo finalístico
-- ❌ Manifestação de Ciência já registrada não pode ser repetida
-- ⏱️ Cooldown de 1 hora entre manifestações da mesma nota
-
-**Manifestações finalísticas** (impedem nova manifestação do mesmo tipo):
-- `CONFIRMACAO_DA_OPERACAO`
-- `DESCONHECIMENTO_DA_OPERACAO`
-- `OPERACAO_NAO_REALIZADA`
-
-**Após a manifestação:**
-- Apollo baixa automaticamente o XML completo da nota da SEFAZ
-- Se o download falhar, a manifestação permanece registrada e o XML é baixado posteriormente
+## Visão Geral (Monitoramento › "Visão Geral")
+Saúde fiscal de todas as empresas do usuário: certificado, certidões, manifestação e captura. Só para administradores.
+- Status por empresa: "Em dia", "Atenção", "Pendência".
+- Bloco **"Atenção necessária"** com cards por assunto (certificados, regularidade, NF-e recebidas, captura de notas).
+- Filtro "Captura com falha".
+- Botão "Atualizar visão" recarrega os dados.
+- Clicar em uma empresa troca para ela (mesmo efeito do seletor de empresa no topo).
 
 ---
 
-### 5. Manifestação em Lote
+## NF-e Recebidas (Documentos › "NF-e Recebidas")
+Notas de produto emitidas por fornecedores contra o CNPJ da empresa.
 
-Permite manifestar múltiplas notas de uma vez. O sistema processa cada nota individualmente e retorna:
-- ✅ **Successes:** notas manifestadas com sucesso
-- ❌ **Failures:** notas que falharam (com motivo)
-- ⏭️ **Skipped:** notas ignoradas (motivo: já manifestada, cooldown, status inválido)
+### Situação da nota
+"Autorizada", "Cancelada", "Denegada". Para consultar na SEFAZ, use **"Consultar situação"** na coluna de situação (abre a janela "Status Nfe").
 
----
+### Como manifestar uma nota
+1. Na linha da nota, abra o menu de ações › **"Manifestar"**.
+2. Escolha: **"Ciente"** (Ciência da Operação), **"Confirmar"** (Confirmação), **"Desconhecer"** (Desconhecimento) ou **"Não realizada"** (Operação não realizada).
+3. Confirme em "Sim, manifestar".
 
-### 6. Consulta de Situação Individual
+Também dá para manifestar várias notas de uma vez selecionando-as. No lote, a nota que falhar é pulada e as outras seguem.
 
-**Quando usar:** verificar o status atual de uma nota diretamente na SEFAZ.
+Regras:
+- A manifestação **não pode ser desfeita**.
+- A Ciência não pode ser repetida. Depois de uma manifestação conclusiva (Confirmar, Desconhecer, Não realizada), nada mais pode ser feito na nota.
+- Entre uma manifestação e outra na mesma nota é preciso esperar 1 hora.
+- Só notas autorizadas podem ser manifestadas.
+- Prazos da SEFAZ, contados da emissão: Ciência em até 10 dias; manifestação conclusiva em até 90 dias. O Apollo avisa quando faltam 15 dias. Quem recusa fora do prazo é a SEFAZ.
 
-**Como funciona:**
-1. Apollo consulta `Nfe.consultaXml` na SEFAZ para a chave informada
-2. Retorna o `cStat` atual (100, 101, 110, etc.)
-3. Atualiza o `status` da nota no banco
+### Ciência automática
+O Apollo dá Ciência sozinho nas notas novas (até 9 dias da emissão), a cada 2 horas. Para desligar, em Configuração › Empresas › (empresa) › "Manifestação da NF-e", escolha "Manual".
 
-⚠️ Cooldown de 1 hora por nota para evitar sobrecarga na SEFAZ.
+### XML e DANFE
+- Selecione as notas e use **"Baixar"** › "Baixar XML das selecionadas" ou "Baixar PDF das selecionadas".
+- "Ver DANFE" no menu da linha.
+- Só existe XML completo e DANFE depois que a nota recebe a Ciência (antes disso a SEFAZ só envia o resumo).
 
----
-
-### 7. Download Manual do XML
-
-Se o XML ainda estiver como resumo (`resNFe`), é possível baixar o XML completo manualmente:
-
-`PUT /purchase-invoice/key/{key}/download-xml`
-
-⚠️ Cooldown de 1 hora. Se a nota ainda não estiver autorizada na SEFAZ, o download não retorna XML.
-
----
-
-### 8. DANFE (PDF da NF-e)
-
-O Apollo gera o PDF do DANFE para notas com **XML completo (`procNFe`)**. Notas ainda com resumo não geram DANFE.
-
-`GET /purchase-invoice/{id}/danfe`
+### Outros recursos
+- **"Consultar por chave"**: busca uma nota pela chave de 44 dígitos.
+- Filtros por etapa da manifestação: "Sem Ciência · no prazo", "Sem Ciência · após o prazo", "Aguardando manifestação conclusiva", "Manifestação conclusiva próxima do prazo", "Manifestação conclusiva com prazo vencido", "Manifestação conclusiva registrada".
+- "Tag" (etiquetas nas notas), "Histórico" (histórico de manifestação), "Enviar por e-mail", "Exportar".
+- Ícone de risco do fornecedor quando o CNPJ estava irregular na emissão.
 
 ---
 
-## NFS-e — Nota Fiscal de Serviço
-
-### Sincronização
-
-A NFS-e é sincronizada via distribuição DFe específica de serviços. O fluxo é acionado manualmente ou automaticamente:
-
-`POST /service-invoice/sync/{companyId}`
-
-### Consulta e Filtros
-
-A listagem de NFS-e suporta filtros por período, emitente, valor, etc.
-
-### XML e PDF
-
-- XML disponível por ID: `GET /service-invoice/{id}/xml`
-- PDF disponível por ID: `GET /service-invoice/{id}/pdf`
-- Download em ZIP de múltiplos XMLs: `POST /service-invoice/xml/zipper`
+## NF-e Emitidas (Documentos › "NF-e Emitidas")
+Notas de produto emitidas pela própria empresa. O Apollo **não emite NF-e**; esta tela guarda e organiza as notas.
+- **"Importar XML"**: envie XML, ZIP ou cole as chaves (uma por linha). Há uma pré-visualização antes de importar ("Nova", "Já existe", "Outra empresa").
+- Captura automática quando a empresa está configurada como destinatária do XML (autXML) e, para empresas do Ceará, pelo SIGA-CE.
+- "Obter XML completo (SERPRO)": quando o XML original não está disponível, o Apollo pode gerar um XML a partir dos dados oficiais. Esse XML aparece como **"Gerado (SERPRO)"** e não tem assinatura digital.
+- "Enviar por e-mail".
 
 ---
 
-## Fluxograma NF-e
-
-```
-[SEFAZ] Emite NF-e (fornecedor emissor)
-    ↓
-[Apollo] Sincroniza via NSU (automático)
-    ├─→ resNFe (resumo) → status derivado de cSitNFe
-    └─→ procNFe (completo) → status consultado pelo scheduler
-    ↓
-[Apollo] CheckStatus (a cada ~100 min) consulta SEFAZ
-    → Atualiza status (100=autorizada, 101=cancelada...)
-    ↓
-[Usuário] Manifesta nota (status 100 obrigatório)
-    ↓
-    ├─→ CIÊNCIA → SEFAZ registra ciência
-    ├─→ CONFIRMAÇÃO → SEFAZ registra confirmação
-    ├─→ DESCONHECIMENTO → SEFAZ registra desconhecimento
-    └─→ NÃO REALIZADA → SEFAZ registra operação não realizada
-    ↓
-[Apollo] Baixa XML completo automaticamente
-    ↓
-✅ Nota disponível com XML + DANFE
-```
+## CT-e (Documentos › "CT-e")
+Conhecimentos de transporte em que a empresa aparece (remetente, destinatário, tomador etc.). Filtro pelo papel da empresa.
+- Ação disponível: **"Baixar XML"**. O Apollo não gera DACTE.
 
 ---
 
-## Regras de Negócio Importantes
+## NFS-e Recebidas e Emitidas
+- **"NFS-e Recebidas"**: notas de serviço tomadas pela empresa (empresa é a tomadora). Ações: "Baixar XML", "Gerar PDF (DANFSe Apollo)", exportar PDF/XLS.
+- **"NFS-e Emitidas"**: notas de serviço prestadas pela empresa, vindas do Ambiente Nacional.
+- Só funciona para municípios que aderiram à NFS-e Padrão Nacional, e a captura de NFS-e precisa estar marcada no card "Captura de documentos" da empresa.
 
-### 1. Status para Manifestar
-- ✅ Somente notas com `status = '100'` podem ser manifestadas
-- ❌ `status = null`, `101`, `102`, `110` bloqueiam a manifestação
-
-### 2. Resumo vs. Completo
-- ✅ Resumo (`resNFe`) permite manifestar se `cSitNFe = 1` (status será `100`)
-- ❌ DANFE só é gerado para notas com XML completo (`procNFe`)
-
-### 3. Sincronização
-- ✅ Máximo 1x por hora por empresa
-- ✅ Sistema automático via scheduler
-- ❌ Consumo indevido na SEFAZ bloqueia por 2 horas
-
-### 4. Manifestações Finalísticas
-- ✅ Uma vez registrada confirmação/desconhecimento/não realizada, não pode ser refeita
-- ✅ Ciência pode ser registrada apenas uma vez por nota
+## Emissão NFS-e (Documentos › "Emissão NFS-e")
+Emitir, cancelar e substituir NFS-e pelo Padrão Nacional e baixar o DANFSe.
+1. "Emitir NFS-e": escolha o serviço cadastrado (Cadastros › Serviços), o tomador, o valor e a competência. A alíquota de ISS vem do serviço se ficar em branco.
+2. Cancelar: informe o motivo do cancelamento.
+3. Substituir: informe o motivo da substituição (mínimo de 15 caracteres).
+Filtros: "Todas", "Autorizadas", "Canceladas", "Substituídas".
 
 ---
 
-## Perguntas Frequentes
+## Fechamento mensal (Monitoramento › "Fechamento mensal")
+Conferência e fechamento de cada mês (competência) por empresa. Escolha o tipo no seletor **"NF-e de entrada | CT-e"**. Disponível a partir da competência novembro/2026.
 
-### Como sincronizo as notas fiscais?
-Acesse o módulo DFe e clique em "Sincronizar". O sistema buscará automaticamente todas as novas NF-e da sua empresa junto à SEFAZ.
+Checklist por empresa: Captura, Resumo (NF-e) ou Processamento (CT-e), Eventos, EFD e Certificado.
 
-### Por que não consigo manifestar uma nota?
-Verifique o status da nota. Somente notas autorizadas (status 100) podem ser manifestadas. Se a nota está como "Resumido/Processando", aguarde o sistema consultar o status na SEFAZ (pode levar até ~100 minutos) ou consulte manualmente em "Verificar Situação".
+Status: "Pronta para fechar", "Com pendências", "Fechada", "Mês em andamento", "Aguardando prazo de cancelamento" (CT-e: só fecha 7 dias depois do fim do mês), "Não monitorada" (sem certificado ou captura desligada), "Sem dados".
 
-### Qual é a diferença entre os tipos de manifestação?
-- **Ciência:** apenas informa que você tomou conhecimento da nota
-- **Confirmação:** confirma que recebeu as mercadorias/serviços
-- **Desconhecimento:** você não reconhece essa operação
-- **Operação não realizada:** você reconhece a nota mas a entrega não aconteceu
+Como fechar:
+1. Escolha o mês com "Mês anterior"/"Próximo mês".
+2. Abra a empresa e clique em **"Fechar mês"**. Se houver item pendente, a justificativa é obrigatória.
+3. Para fechar várias de uma vez: **"Fechar prontas"** (fecha só as que estão "Pronta para fechar").
+4. Para desfazer: **"Reabrir mês"**, com motivo obrigatório. O fechamento anterior continua no histórico.
 
-### O que é DANFE?
-É o Documento Auxiliar da Nota Fiscal Eletrônica — o PDF imprimível da NF-e. Disponível apenas para notas com XML completo.
+No detalhe da NF-e, as notas sem Ciência podem receber **"Dar ciência"**, mas só na empresa em que você está logado ("Para dar ciência daqui, entre nesta empresa pelo seletor de empresas").
 
-### A nota foi manifestada mas o XML ainda está incompleto. O que fazer?
-Tente o download manual em "Baixar XML". Se não funcionar, aguarde o próximo ciclo do sistema ou entre em contato com o suporte.
-
-### Não encontrei a nota na lista. Como buscar por chave?
-Acesse "Buscar nota por chave", informe a chave de acesso (44 dígitos) e o sistema consultará diretamente na SEFAZ.
+Nota fora de hora: se chegar uma nota de um mês já fechado, o Apollo avisa no sino de notificações.
 
 ---
 
-## Consulta de CNPJ
+## Certificados (Monitoramento › "Certificados")
+Vencimento do certificado de cada empresa ("Válidos", "Vencendo", "Vencidos", "Sem certificado") e troca do certificado.
+- Só certificado **A1 (.pfx)**. O CNPJ do certificado precisa ser da empresa.
+- Na tela de gerenciar certificado: certificado principal, backups (promover backup a principal), permissões de quem pode ver/gerenciar, ver a senha (pede sua senha de novo) e "Auditoria" (quem viu, baixou ou trocou).
+- Avisos por e-mail perto do vencimento.
 
-**Localização no Apollo:** Menu DFe → Consulta CNPJ (rota `/dfe/consulta-cnpj`)
+## Regularidade (Monitoramento › "Regularidade")
+Certidões da empresa: CND Federal, FGTS, CND Trabalhista e, só para empresas do Ceará, as estaduais.
+- Contadores: "Regulares", "Com pendência", "Sem resultado (falha na consulta)", "Não consultadas".
+- **"Consultar todas agora"** consulta todas as certidões da empresa. A consulta é **só manual** (não renova sozinha) porque cada consulta tem custo.
+- Não há certidão municipal.
 
-### Como usar
-1. Digite o CNPJ da empresa (com ou sem formatação)
-2. Clique em **"Consultar CNPJ"**
-3. O Apollo consulta as fontes disponíveis e exibe os dados da empresa
+## Fornecedores (Monitoramento › "Fornecedores")
+Situação cadastral dos emitentes das NF-e recebidas (ativa, inapta etc.), atualizada todo dia de madrugada. Indica "Irregular na emissão" / "Irregular após a emissão". Dá para cadastrar o emitente como fornecedor em Cadastros.
+- Ação **"Consultar CNPJ"** no topo da tela. Quem só tem permissão de consulta vê um item próprio "Consulta CNPJ" no menu.
 
-### Abas disponíveis
-
-#### Aba 1 — Receita Federal
-Consulta os dados cadastrais oficiais da Receita Federal (via BrasilAPI). Retorna:
-- Razão Social e Nome Fantasia
-- **Situação cadastral** (Ativa, Baixada, Inapta, Suspensa) — exibida em destaque colorido
-- Tipo: Micro Empresa, EPP, etc.
-- Capital Social
-- Natureza jurídica (ex.: Sociedade Empresária Limitada)
-- Porte Social
-- Data de abertura
-- CNAE principal e secundários
-- Endereço completo (logradouro, número, bairro, cidade, UF, CEP)
-- **QSA — Quadro de Sócios e Administradores**
-
-#### Aba 2 — SEFAZ CE
-Consulta a situação cadastral do CNPJ perante a **SEFAZ do Ceará**. Útil para verificar se o emitente de uma nota está regularizado no estado.
-
-#### Aba 3 — Simples Nacional
-Consulta se o CNPJ é optante do **Simples Nacional** e o regime tributário atual.
+### Consulta CNPJ
+Preencha "CPF / CNPJ" e clique em **"Buscar"**. Abas: "Receita Federal", "SEFAZ" (inscrição estadual, no estado do CNPJ consultado) e "Simples Nacional".
 
 ---
 
-### Quando usar
-- Verificar dados de um fornecedor antes de cadastrá-lo
-- Confirmar situação cadastral (Receita Federal e SEFAZ CE) de um emitente de notas
-- Verificar se o fornecedor é optante do Simples Nacional
-- Validar endereço e razão social antes de emitir documentos
-
-⚠️ **IMPORTANTE:** Os dados da aba Receita Federal vêm da BrasilAPI (base federal). Pode haver pequena defasagem em relação ao momento atual.
+## Análises
+- **"NF-e × EFD"**: compara as NF-e recebidas com o EFD importado e mostra notas não declaradas ou divergentes. Permite registrar a verificação SITRAM. A importação do EFD ainda não tem tela: é feita pela equipe Coffee.
+- **"Estimativas"**: projeção de ICMS, DIFAL e ISS do mês. Botão "Calcular estimativa" / "Recalcular estimativa". É uma estimativa, não apuração (não calcula o ICMS de débito).
+- **"Relatórios"**: relatório mensal e relatórios de NF-e, NFS-e e CT-e com "Visualizar PDF".
 
 ---
 
----
+## Quem pode
+O acesso é dado pelo administrador da sua empresa em Configuração › Usuários. Ver uma tela não dá direito às ações; cada ação tem permissão própria:
+- Ver NF-e Recebidas: NFE · NF-e Emitidas: INBOUND_NFE · CT-e: CTE · NFS-e: NFSE
+- Manifestar: DFE_MANIFEST
+- Sincronizar manualmente: DFE_SYNC
+- Emitir/cancelar/substituir NFS-e: NFSE_EMIT
+- Fechar mês: MONTHLY_CLOSING · Reabrir mês: MONTHLY_CLOSING_REOPEN
+- Certidões: CERTIDAO · Certificados: ADMIN_CERTIFICATE · Consulta CNPJ: COMPANY_STATUS_QUERY
+- Visão Geral: administradores da empresa (ADMIN_DFE e afins)
 
-## Resumo DFe (`/dfe/resumo-dfe`)
-
-Painel de **saúde fiscal consolidada por empresa**. Exibe o status geral de cada empresa cadastrada em relação ao cumprimento fiscal de DFe.
-
-### Status possíveis
-
-| Status | Significado |
-|--------|-------------|
-| `EM_DIA` | Empresa sem pendências fiscais |
-| `ATENCAO` | Empresa com itens que merecem atenção |
-| `PENDENCIA` | Empresa com pendências fiscais abertas |
-
-### Visualização
-- Cards ou tabela (preferência salva no navegador)
-- Filtro por status: Todas / Pendência / Atenção / Em dia
-- Contador por categoria no topo da página
+Sem a permissão, o botão simplesmente não aparece.
 
 ---
 
-## Análise NF-e (`/dfe/analise-nfe`)
+## Perguntas frequentes
 
-Visão analítica mensal das NF-e recebidas, cruzando o que a SEFAZ registrou com o que foi declarado no EFD e registrado no SITAM.
+**Por que não vejo o botão "Manifestar"?**
+Falta a permissão de manifestar (DFE_MANIFEST). Peça ao administrador da sua empresa.
 
-### Filtros
-- Empresa (seletor)
-- Ano (últimos 3 anos disponíveis)
+**Onde clico para sincronizar as notas?**
+Não precisa: a captura é automática, a cada hora mais ou menos. Se as notas não estão chegando, veja a saúde da captura em Configuração › Empresas ou na Visão Geral.
 
-### Abas
-- **NF-e por Município:** notas agrupadas por município de emissão
-- **NF-e Geral:** visão consolidada anual, linha por mês
+**Por que a nota não tem XML nem DANFE?**
+A SEFAZ só libera o XML completo depois da Ciência. Dê "Ciente" (ou aguarde a Ciência automática) e espere a próxima captura.
 
-### Colunas da tabela mensal
+**Posso desfazer uma manifestação?**
+Não. A manifestação é definitiva na SEFAZ.
 
-| Coluna | Descrição |
-|--------|-----------|
-| Mês | Nome do mês |
-| Status | `regular` ou `atencao` |
-| Autorizadas | Qtd e valor total das NF-e autorizadas |
-| Não Declaradas | NF-e não lançadas no EFD (declaredInEfd=false) |
-| Declaradas c/ Diferença | NF-e declaradas com valor divergente do EFD |
-| Não Registradas | NF-e não registradas no SITAM (registeredInSitam=false) |
+**Recebi "Desconhecer" por engano, e agora?**
+Não dá para reverter no Apollo nem na SEFAZ. Fale com o fornecedor/contador.
 
-### Regras
-- Cada coluna exibe quantidade, valor e percentual em relação às autorizadas
-- Mês sem notas aparece sem status (`null`)
-- Linha com qualquer pendência recebe status `atencao`
+**Onde estão as NFS-e que minha empresa contratou?**
+Em "NFS-e Recebidas". "NFS-e Emitidas" são as que a sua empresa prestou.
 
----
+**Por que a NFS-e não aparece?**
+O município precisa estar no Padrão Nacional e a captura de NFS-e precisa estar marcada no card "Captura de documentos" da empresa.
 
-## NF-e Saída (`/dfe/nfe-saida`)
+**O Apollo emite NF-e de produto?**
+Não. Só NFS-e (Emissão NFS-e). As NF-e emitidas são importadas ou capturadas.
 
-Listagem das **NF-e emitidas** pela empresa (notas de saída). Diferente das NF-e de entrada (recebidas de fornecedores), aqui estão as notas emitidas pela própria empresa.
+**Como renovo as certidões?**
+Em "Regularidade", clique em "Consultar todas agora". Não há renovação automática.
 
-### Colunas principais
-- Número, Série, CFOP (badge colorido por família), Emissão, Destinatário, CNPJ, Valor, Situação, Eventos (CC-e, Cancelada)
+**Posso usar certificado A3?**
+Não. Só A1 (.pfx).
 
-### CFOP — código de operação
-Exibido como badge colorido. Primeiro dígito indica tipo de operação (5=saída estadual, 6=saída interestadual, etc.).
-
-### Status / Situação
-
-| Status | Exibição |
-|--------|----------|
-| `100` | Autorizada |
-| `101` | Cancelada |
-| `102` | Inutilizada |
-| outro | Processando |
-
-### Ações por nota
-- **Ver DANFE** — abre o PDF da nota
-- **Baixar XML** — download do XML da nota
-
-### Funcionalidades adicionais
-- **Consultar por chave:** busca manual de NF-e de saída pela chave de acesso de 44 dígitos
-- **Importar XML:** importação manual de NF-e (upload de arquivo XML)
-- Filtro por empresa, CFOP, período de emissão, faixa de valor
+**Onde vejo o espelho da nota / a pré-nota?**
+O espelho da nota é um PDF do módulo Orçamentos. A pré-nota é do Protheus e aparece na aprovação de pedidos (menu Fiscal), não na Gestão Fiscal.
 
 ---
 
-## NFS-e Emissão (`/dfe/nfse-emissao`)
-
-Gestão das **NFS-e emitidas** pela empresa (notas de serviço de saída). Permite emitir, cancelar e substituir notas fiscais de serviço.
-
-### Status (Situação)
-
-| Situação | Exibição |
-|----------|----------|
-| `NORMAL` | Autorizada |
-| `CANCELADA` | Cancelada |
-| `SUBSTITUIDA` | Substituída |
-
-### Abas de filtro
-- Todas / Autorizadas / Canceladas / Substituídas
-
-### Colunas
-- Nº, Emissão, Competência, Tomador, Doc. (CPF/CNPJ do tomador), Valor, Situação
-
-### Ações por nota
-| Ação | Condição |
-|------|----------|
-| **Cancelar** | Apenas notas com situação `NORMAL` |
-| **Substituir** | Apenas notas com situação `NORMAL` |
-| **PDF (DANFSE)** | Sempre disponível |
-
-### Emitir nova NFS-e
-Clique em **"+ Emitir NFS-e"** e preencha o formulário com dados do serviço e do tomador.
-
----
-
-## NFS-e Saída (`/dfe/nfse-saida`)
-
-Listagem das **NFS-e recebidas** onde a empresa figura como tomadora de serviços (perspectiva de entrada para NFS-e). Complementar à NFS-e Emissão.
-
-### Status possíveis
-| Status | Descrição |
-|--------|-----------|
-| `100` | Autorizada |
-| `101` | Cancelada |
-| `102` | Substituída |
-| `103` | Rejeitada |
-| `0` | Recebida |
-| `107` | Processando |
-
-### Ações
-- Visualizar XML, baixar PDF, filtrar por período, valor, município e situação
-
----
-
-## CT-e (`/dfe/cte`)
-
-Gestão dos **CT-e (Conhecimentos de Transporte Eletrônico)** recebidos pela empresa.
-
-### Modais de transporte
-- `AEREO` — Aéreo
-- `RODOVIARIO` — Rodoviário
-- `FERROVIARIO` — Ferroviário
-- `AQUAVIARIO` — Aquaviário
-- `DUTOVIARIO` — Dutoviário
-
-### Status / Situação
-| Status | Exibição |
-|--------|----------|
-| `100` | Autorizado |
-| `101` | Cancelado |
-| `110` | Denegado |
-
-### Colunas principais
-- Chave, Emitente, CNPJ, Modal, Valor, Emissão, Situação
-
-### Ações por CT-e
-- **Ver DACTE** — PDF do Documento Auxiliar do CT-e
-- **Baixar XML** — download do XML do CT-e
-
-### Filtros disponíveis
-- Empresa, período de emissão, modal (tipo de transporte), UF, situação, faixa de valor
-
----
-
-## Estimativa Tributária (`/dfe/estimativa-tributaria`)
-
-Projeção de **ICMS e ISS** estimados com base nas notas do período selecionado. Útil para planejamento tributário.
-
-⚠️ **Importante:** é uma estimativa de planejamento, não substitui a apuração oficial do SPED/EFD.
-
-### Filtros
-- Mês e Ano (seletor)
-
-### Como usar
-1. Selecione o mês e o ano desejado
-2. Clique em **"Calcular"**
-3. O sistema processa as notas do período e exibe a projeção
-
-### Dados exibidos
-- Regime tributário (Simples Nacional / Lucro Real / Lucro Presumido)
-- Data do cálculo
-- Estimativa de ICMS a recolher
-- Estimativa de ISS a recolher
-- Base de cálculo e alíquotas aplicadas
-
----
-
-## Certidões (`/dfe/certidoes`)
-
-Monitoramento de **regularidade fiscal** via certidões negativas automáticas.
-
-### Tipos de certidão monitorados
-| Tipo | Descrição |
-|------|-----------|
-| `CND_FEDERAL` | Certidão Negativa de Débitos — Receita Federal |
-| `FGTS` | Regularidade do FGTS |
-| `ESTADUAL_CE` | Certidão estadual — SEFAZ Ceará |
-| `DEBITOS_ESTADUAIS` | Débitos estaduais |
-| `CND_TRABALHISTA` | Certidão Negativa de Débitos Trabalhistas |
-
-### Status das certidões
-| Status | Significado |
-|--------|-------------|
-| `NEGATIVA` | Regular — sem débitos |
-| `POSITIVA_COM_EFEITO_NEGATIVA` | Possui débitos mas com efeito de negativa |
-| `COM_PENDENCIA` / `POSITIVA` | Com pendências |
-| `ERRO_CONSULTA` | Falha na consulta automática |
-
-### Painel de resumo
-- Contador de certidões regulares, vencendo em 30 dias, e vencidas
-
-### Ações
-- **Atualizar todas:** consulta todas as certidões de uma vez
-- Cada card exibe a validade e alerta quando restam ≤ 30 dias para vencer
-
----
-
-## Certificado Digital (`/dfe/certificado-digital`)
-
-Monitoramento do **vencimento dos certificados digitais A1/A3** por empresa.
-
-### Painel de resumo
-- Total de empresas com certificado
-- Empresas com certificado vencendo em até 30 dias (alerta laranja)
-- Empresas com certificado vencido (alerta vermelho)
-
-### Filtros
-- Todos / Vencendo / Vencidos
-
-### Ações
-- Visualizar detalhes do certificado por empresa
-- Renovar/atualizar certificado
-
----
-
-## Relatórios NF-e (`/dfe/relatorios-nfe`)
-
-Relatórios específicos do módulo DFe, focados em documentos fiscais eletrônicos.
-
-### Relatórios disponíveis
-
-| Relatório | Descrição |
-|-----------|-----------|
-| **Relatório Mensal** | Visão consolidada: manifestações, compliance fiscal e principais fornecedores |
-| **Nota Fiscal de Entrada** | NF-e de entrada por tipo, status, faixa de valor e período |
-| **NF-e de Saída** | NF-e emitidas no período |
-| **NFS-e** | Notas fiscais de serviço emitidas no período |
-| **CT-e** | Conhecimentos de transporte do período, com filtro por papel no CT-e |
-
-> Veja também `/relatorios` para relatórios de outros módulos (financeiro, pedidos, caixinha, orçamentos, etc.)
-
----
-
-## Situação dos Emitentes (`/dfe/issuer-situation`)
-
-Visão consolidada da **situação cadastral dos emitentes** das NF-e recebidas. Permite identificar fornecedores com situação irregular perante a Receita Federal.
-
-### Situações cadastrais
-
-| Situação | Risco |
-|----------|-------|
-| `ATIVA` | Regular |
-| `INAPTA` | Risco Alto |
-| `SUSPENSA` | Risco Alto |
-| `BAIXADA` | Risco Alto |
-| `NULA` | Risco Alto |
-
-### Funcionalidades
-- Ordenação por nome, CNPJ ou situação
-- Badge de risco (Regular / Risco Alto) por emitente
-- **Importar como fornecedor:** cria um novo fornecedor no cadastro diretamente a partir do emitente
-- **Abrir no cadastro:** navega para o fornecedor já cadastrado
-- Busca por CNPJ ou nome do emitente
-
-### Quando usar
-- Auditar fornecedores com situação irregular antes de pagar notas
-- Identificar emitentes que ainda não estão no cadastro de fornecedores
-
----
-
-## Glossário
-
-- **NF-e:** Nota Fiscal Eletrônica (produtos/mercadorias)
-- **NFS-e:** Nota Fiscal de Serviço Eletrônica
-- **CT-e:** Conhecimento de Transporte Eletrônico
-- **DFe:** Documento Fiscal Eletrônico (termo genérico)
-- **NSU:** Número Sequencial Único — controla quais documentos já foram baixados da SEFAZ
-- **SEFAZ:** Secretaria da Fazenda — servidor fiscal que armazena os documentos
-- **resNFe:** Resumo da NF-e — dados básicos sem o XML completo
-- **procNFe:** Processo da NF-e — XML integral da nota
-- **cStat:** Código de status retornado pela SEFAZ (100=autorizada, 101=cancelada, 110=denegada)
-- **cSitNFe:** Situação da NF-e no resumo (1=autorizada, 2=denegada, 3=cancelada)
-- **Manifestação:** declaração do destinatário sobre a nota à SEFAZ
-- **DANFE:** Documento Auxiliar da NF-e (PDF)
-- **DACTE:** Documento Auxiliar do CT-e (PDF)
-- **DANFSE:** Documento Auxiliar da NFS-e (PDF)
-- **Distribuição DFe:** serviço da SEFAZ para entrega de documentos ao destinatário
-- **EFD:** Escrituração Fiscal Digital — obrigação acessória do SPED
-- **SITAM:** Sistema de controle tributário estadual (CE)
-- **CND:** Certidão Negativa de Débitos
-- **Certidão:** documento emitido por órgão público atestando regularidade fiscal
-
----
-
-**Última atualização:** Junho 2026
-**Versão do documento:** 1.1
+## Problemas comuns
+- **"A sincronização só poderá ser realizada após 1 hora"**: a sincronização manual tem intervalo mínimo de 1 hora. Aguarde.
+- **Captura com chip vermelho / "Captura parada"**: verifique se o certificado está válido em "Certificados". Se estiver, aguarde o próximo ciclo; se continuar mais de um dia, abra chamado no suporte.
+- **Manifestação recusada pela SEFAZ**: geralmente prazo vencido (Ciência após 10 dias, conclusiva após 90 dias) ou nota cancelada.
+- **"Cancelamento rejeitado pela SEFIN"** (NFS-e): o município/ambiente nacional recusou o cancelamento, normalmente por prazo. Use "Substituir" ou procure o município.
+- **"Sem resultado (falha na consulta)"** em certidões: o órgão não respondeu. Tente "Consultar todas agora" mais tarde.
+- **Fechamento com "Não monitorada"**: a empresa não tem certificado ou está com a captura desligada. Configure em Configuração › Empresas.
