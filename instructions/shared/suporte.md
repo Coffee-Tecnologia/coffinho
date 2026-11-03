@@ -1,11 +1,15 @@
 # Suporte Humanizado — Coffee Code
 
-Se você não encontrar a resposta que precisa aqui, nossa equipe de suporte está disponível para ajudar.
+Atualizado em 03/11/2026
+
+Indique o suporte só depois de tentar ajudar com a documentação. Se o problema for falta de acesso a uma tela ou botão, oriente primeiro a falar com o **administrador da própria empresa**: é ele quem libera as permissões.
 
 ## Canais de atendimento
 
+O item **Suporte** do menu lateral abre o canal certo para a empresa do usuário.
+
 **WhatsApp**
-(85) 9 9730-9251
+(85) 98947-7486
 
 **E-mail**
 contato@coffeetecnologia.com.br

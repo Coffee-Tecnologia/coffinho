@@ -1,108 +1,43 @@
-# Relatórios - Apollo
+# Relatórios — Apollo
+Atualizado em 03/11/2026
 
-## Visão Geral
+Menu **Relatórios**: central com um card por relatório. Use "Buscar relatório..." ou as categorias (Todos, Financeiro, Documentos, Fiscal, Caixinha). Clique no card para abrir os filtros.
 
-O módulo **Relatórios** (`/relatorios`) centraliza a geração e exportação de relatórios de todos os módulos do Apollo. O usuário seleciona o tipo de relatório, aplica filtros e exporta em PDF ou planilha.
+## O que funciona hoje
+Estes geram o arquivo de verdade:
 
----
+| Card | Como usar | Saída |
+|---|---|---|
+| **Nota Fiscal de Entrada** | Período, status (Autorizada, Cancelada, Denegada, Inutilizada) e faixa de valor ("Valor total (de)" / "Valor total (até)") | "Visualizar PDF" |
+| **NF-e de Saída** | Período | "Visualizar PDF" |
+| **NFS-e** | Período | "Visualizar PDF" |
+| **CT-e** | Período e "Papel no CT-e" (Tomador, Emitente, Remetente, Destinatário, Expedidor, Recebedor) | "Visualizar PDF" |
+| **Impressão de DANFE** | "Chave de acesso (44 dígitos)" de uma NF-e | "Imprimir DANFE" |
 
-## Acesso
+"Limpar filtros" (ou "Limpar") zera o formulário.
 
-**Rota:** `/relatorios`
+## Ainda não geram arquivo
+Os cards abaixo já aparecem na tela, mas os botões "Gerar Relatório", "Exportar XLS" e "Exportar PDF" **ainda não fazem nada**: Relatório Financeiro, Relatório de Pedidos, Relatório de Caixinha, Relatório A Pagar, Relatório A Receber, Relatório de Orçamentos e Documentos Fiscais.
 
-A página principal exibe cards de relatório organizados em categorias. O usuário pode buscar por nome ou filtrar pela categoria.
+Se o usuário pedir um desses, diga que ainda está em desenvolvimento e ofereça a alternativa: o botão "Exportar" (PDF/XLS) da própria tela gera a lista com os filtros aplicados:
+- Financeiro › A pagar / A receber: "Exportar" (PDF, XLS e "Pagos por Prazo");
+- Documentos › Caixa geral;
+- Documentos › Pedidos: "Exportar";
+- Cadastros;
+- Orçamentos: PDF/XLS de cada orçamento.
 
----
+## Outros relatórios do sistema
+- **Gestão Fiscal › Análises › Relatórios:** relatórios de NF-e da Gestão Fiscal, com "Visualizar PDF" (ver doc de Gestão Fiscal).
+- **DANFE de uma nota da lista:** em Gestão Fiscal › NF-e Recebidas, selecione as notas e use "Baixar".
 
-## Categorias de Relatório
+## Quem pode
+Permissão REPORT, ou administrador da empresa (ADMIN_BASIC). Sem o menu Relatórios, peça acesso ao administrador da sua empresa.
 
-| Categoria | Relatórios incluídos |
-|-----------|---------------------|
-| **Financeiro** | Documentos financeiros, A Pagar, A Receber |
-| **Pedidos** | Pedidos de compra |
-| **Caixinha** | Movimentos e resumos de caixinha |
-| **DFe** | Documentos fiscais eletrônicos |
-| **Orçamentos** | Orçamentos e propostas |
-| **Documentos Fiscais** | NF-e, NFS-e, CT-e |
+## Perguntas frequentes
+- **Cliquei em "Exportar XLS" no Relatório Financeiro e nada aconteceu.** Esse card ainda não gera arquivo. Use o "Exportar" da tela Financeiro › A pagar / A receber.
+- **Como imprimo o DANFE de uma nota?** Relatórios › Impressão de DANFE › cole a chave de 44 dígitos › "Imprimir DANFE".
+- **Dá para filtrar por empresa?** O relatório usa a empresa selecionada no topo. Para outra empresa, troque a empresa no topo da tela.
 
----
-
-## Relatórios Disponíveis
-
-### Financeiro
-**Relatório Financeiro** — documentos financeiros do módulo financeiro com filtros de período, status e empresa.
-
-### Pedidos de Compra
-**Relatório de Pedidos** — pedidos de compra sincronizados do Protheus com filtro por período, fornecedor e status.
-
-### Caixinha
-**Relatório de Caixinha** — lançamentos e resumos de caixinha por período e caixinha selecionada.
-
-### DFe (Documentos Fiscais Eletrônicos)
-**Relatório DFe** — visão consolidada de documentos fiscais eletrônicos recebidos.
-
-### A Pagar
-**Relatório A Pagar** — documentos avulsos do tipo A Pagar com filtro por período e status.
-
-### A Receber
-**Relatório A Receber** — documentos avulsos do tipo A Receber com filtro por período e status.
-
-### Orçamentos
-**Relatório de Orçamentos** — orçamentos com filtro por status, período e cliente.
-
-### Documentos Fiscais
-**NF-e de Entrada** — notas de entrada por tipo, status, faixa de valor e período.
-
-**NF-e de Saída** — notas emitidas no período selecionado.
-
-**NFS-e** — notas fiscais de serviço emitidas no período.
-
-**CT-e** — conhecimentos de transporte com filtro por papel no CT-e e período.
-
-> ⚠️ Alguns relatórios estão em construção e podem não funcionar completamente. Contate o suporte se necessário.
-
----
-
-## Como gerar um relatório
-
-1. Acesse **Relatórios** no menu
-2. Localize o relatório desejado (use a busca ou filtre por categoria)
-3. Clique no card para expandir o formulário de filtros
-4. Preencha os parâmetros (período, empresa, status, etc.)
-5. Clique em **Gerar** ou **Exportar**
-
----
-
-## Relatórios NF-e (sub-módulo DFe)
-
-Os relatórios específicos de NF-e também estão disponíveis em `/dfe/relatorios-nfe` com foco em:
-- Relatório Mensal de compliance DFe
-- NF-e por período e situação
-- NFS-e emitidas
-- CT-e do período
-
----
-
-## Perguntas Frequentes
-
-### Qual a diferença entre /relatorios e /dfe/relatorios-nfe?
-`/relatorios` cobre todos os módulos (financeiro, pedidos, caixinha, orçamentos, documentos fiscais). `/dfe/relatorios-nfe` é específico para documentos fiscais eletrônicos com foco em análise de compliance.
-
-### Como filtro por empresa?
-A maioria dos relatórios tem um seletor de empresa no formulário. Se não aparecer, o relatório usa a empresa do usuário logado.
-
-### O relatório pode ser exportado?
-Sim, os relatórios suportam exportação em PDF ou planilha (dependendo do tipo). Clique no botão de exportação após configurar os filtros.
-
----
-
-## Glossário
-
-- **Card de relatório:** elemento visual que representa um relatório disponível
-- **Categoria:** agrupamento de relatórios por área do sistema
-- **Período:** intervalo de datas usado como filtro principal
-
----
-
-**Última atualização:** Junho 2026
-**Versão do documento:** 1.0
+## Problemas comuns
+- O DANFE não sai: a chave precisa ter 44 dígitos, e a nota precisa estar no Apollo com o XML completo. Se o Apollo só tiver o resumo da nota, não há DANFE: é preciso registrar a Ciência antes.
+- "Erro ao gerar relatório!": tente um período menor. Se persistir, acione o suporte.

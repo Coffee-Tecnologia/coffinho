@@ -1,152 +1,73 @@
 # Financeiro - Apollo
 
-## Visão Geral
-O módulo **Financeiro** é a visão do time financeiro sobre os documentos que chegam para pagamento ou recebimento. Agrupa três frentes: **Documentos** (do Protheus), **A Pagar** e **A Receber** (documentos avulsos), além da visão financeira da **Caixinha**.
+Atualizado em 03/11/2026
+
+O menu **Financeiro** é onde o financeiro dá a aprovação final. As telas mudam conforme o tipo de empresa:
+
+| Tela | Para que serve | Onde existe |
+|---|---|---|
+| Financeiro › Documentos | Aprovar ou reprovar os títulos a pagar gerados pelos pedidos de compra | Só para empresas com Protheus |
+| Financeiro › Caixinha | Aprovação final do resumo (prestação de contas) da caixinha | Protheus e nuvem |
+| Financeiro › A pagar / A receber | Aprovar (dar baixa) ou reprovar as contas lançadas pela equipe | Só na nuvem |
+
+Se uma dessas telas não aparece no seu menu, ou a sua empresa não usa aquele modo, ou você não tem a permissão. Para liberar, peça ao administrador da sua empresa.
 
 ---
 
-## 1. Financeiro / Documentos
+## Como aprovar um título de pedido de compra (Financeiro › Documentos, só Protheus)
+O título aparece aqui quando o Fiscal aprova o pedido de compra.
+1. Acesse **Financeiro › Documentos**. A tela abre na aba "Pendentes" (as outras são "Todos" e "Finalizados").
+2. Use a busca, o chip "Vencimento" ou a pesquisa avançada para achar o título.
+3. Na linha, abra "Detalhes" para ver os pedidos vinculados, ou use o menu de ações e escolha "Aprovar" ou "Reprovar".
+4. **Aprovar**: confirme em "Sim". A observação é opcional. O título fica "Finalizado" e o pedido é concluído.
+5. **Reprovar**: a "Observação" é obrigatória. O pedido **volta para o Fiscal** e aparece na aba "Rejeitados Fin" da tela Fiscal › Pedidos. Ele não volta direto para o solicitante.
 
-**Rota:** `/financeiro/documentos`
+Os dados de liberação, vencimento e baixa vêm do Protheus. Usuários administradores têm o botão "Sincronizar com o Protheus" para atualizar a lista. Esta tela não tem exportação.
 
-Listagem dos documentos financeiros vindos do Protheus aguardando aprovação ou já finalizados pelo financeiro.
+## Como aprovar contas a pagar ou a receber (Financeiro › A pagar / A receber, só nuvem)
+A equipe lança as contas em Documentos › A pagar ou A receber e envia. Elas chegam aqui como pendentes.
+1. Acesse **Financeiro › A pagar** (ou **A receber**). As abas são "Todos", "Pendentes" e "Finalizados".
+2. Na coluna "Aprovar" de cada linha há um ✓ (aprovar) e um ✗ (reprovar). Os botões ficam apagados quando o documento já foi finalizado.
+3. **Aprovar** dá a baixa: o documento fica "Finalizado" com a data de hoje como data de pagamento.
+4. **Reprovar** exige "Observação". O documento volta para quem lançou, que pode corrigir o anexo e enviar de novo.
+5. Para conferir o comprovante, use a coluna "Anexo".
 
-### Abas
-| Aba | O que mostra |
-|-----|-------------|
-| **Pendentes** | Documentos aguardando ação do financeiro |
-| **Finalizados** | Documentos já aprovados/baixados |
-| **Todos** | Visão completa sem filtro de status |
+Em A receber, a coluna "Fornecedor" vira "Cliente", e a coluna "Recebido em" mostra a data da baixa.
 
-### Colunas da tabela
-- Filial
-- Documento (número)
-- Parcela
-- Fornecedor (código + nome)
-- Loja
-- Valor
-- Vencimento
-- R. Vencimento (vencimento real)
-- Aprovador
-- Anexo
-- Status
+**Exportar** (cabeçalho da tela): "Exportar PDF", "Exportar XLS" e "Pagos por Prazo", que separa o que foi pago antes, perto ou depois do vencimento.
 
-### Filtros disponíveis
-- Busca por texto livre
-- Filtro de período por **vencimento** (chips de data)
-- Pesquisa avançada (modal)
+## Como aprovar o resumo da caixinha (Financeiro › Caixinha)
+É a última etapa da prestação de contas da caixinha. Antes de chegar aqui, o resumo passa pela Central de Serviço, pelo gestor e pelo Fiscal.
+1. Acesse **Financeiro › Caixinha**. A aba "Pendentes" mostra os resumos com status "Aguardando financeiro".
+2. No menu da linha: "Detalhes" (títulos do resumo), "Historico", "Aprovar" ou "Reprovar".
+3. Ao aprovar, o resumo fica "Finalizado". Ao reprovar, fica "Rejeitado" e a Central de Serviço precisa tratar os títulos.
 
-### Ações por documento
-| Ação | Quando disponível |
-|------|------------------|
-| **Detalhes** | Sempre |
-| **Aprovar** | Quando status não for `finished` |
-| **Reprovar** | Quando status não for `finished` |
-
-### Exportação
-- Relatório exportável via botão na barra de ações
+Para o fluxo completo da caixinha, veja a documentação da Caixinha.
 
 ---
 
-## 2. Financeiro / A Pagar
+## Quem pode
+- Financeiro › Documentos: permissão FINANCIAL (ou administrador da empresa com Protheus).
+- Financeiro › A pagar / A receber: permissão SINGLE_DOCUMENT_FINANCIAL (ou administrador da empresa).
+- Financeiro › Caixinha: permissão FINANCIAL ou FINANCIAL_LITTLE_BOX.
 
-**Rota:** `/financeiro/a-pagar`
+## Perguntas frequentes
+**Reprovei um título no Financeiro › Documentos. Para onde ele foi?**
+Para o Fiscal, na aba "Rejeitados Fin" de Fiscal › Pedidos. O Fiscal confere e decide o que fazer.
 
-Documentos avulsos do tipo **A Pagar** — lançamentos manuais que precisam ser pagos. Mesmo comportamento de Documentos Avulsos, filtrado pelo tipo `A_PAGAR`.
+**A aprovação do financeiro gera lançamento no Caixa Geral?**
+Não. O Caixa Geral é lançado à mão, em Documentos › Caixa geral.
 
-Ações disponíveis: **Aprovar**, **Reprovar**, **Detalhes**, **Anexar**.
+**Posso exportar a lista de Financeiro › Documentos?**
+Não. A exportação existe só em A pagar e A receber, que são telas da nuvem.
 
----
+**Não vejo A pagar / A receber.**
+Essas telas existem só em empresas na nuvem. Em empresas com Protheus, as contas vêm dos títulos dos pedidos (Financeiro › Documentos).
 
-## 3. Financeiro / A Receber
+**O botão de aprovar está apagado.**
+O documento já foi finalizado, ou ainda não foi enviado por quem lançou.
 
-**Rota:** `/financeiro/a-receber`
-
-Documentos avulsos do tipo **A Receber** — valores a receber. Mesmo comportamento de Documentos Avulsos, filtrado pelo tipo `A_RECEBER`.
-
----
-
-## 4. Financeiro / Caixinha
-
-**Rota:** `/financeiro/caixinha`
-
-Visão do financeiro sobre as prestações de contas de caixinha que chegaram para aprovação final (status `WAITING_FINANCIAL`). O financeiro aprova ou rejeita o resumo.
-
----
-
-## Fluxo Geral do Financeiro
-
-```
-[Fiscal aprova pedido] → billingStatus: finished
-        ↓
-[Financeiro] recebe em "Documentos" com status pendente
-        ↓
-[Financeiro] analisa: verifica valores, vencimentos, anexos
-        ↓
-    ├─→ APROVAR → documento finalizado ✅
-    └─→ REPROVAR → retorna com observação ❌
-```
-
----
-
-## Status no Financeiro
-
-| Status financialStatus | Significado |
-|----------------------|-------------|
-| `waiting` | Ainda não chegou ao financeiro |
-| `pending` | Aguardando ação do financeiro |
-| `finished` | Aprovado/baixado pelo financeiro |
-
----
-
-## Regras de Negócio
-
-### 1. Pré-requisito para chegar ao Financeiro
-- ✅ O documento precisa ter sido **aprovado pelo Fiscal** antes
-- ❌ Documentos reprovados pelo fiscal não chegam ao financeiro
-
-### 2. Aprovação
-- ✅ Ao aprovar, o documento muda para `financialStatus: finished`
-- ✅ Pode gerar lançamento automático no Caixa Geral
-
-### 3. Reprovação
-- ✅ Obrigatório informar observação
-- ✅ Documento retorna para o solicitante com status `rejected`
-
-### 4. Anexos
-- ✅ Financeiro pode visualizar e adicionar anexos em qualquer momento
-
----
-
-## Perguntas Frequentes
-
-### Como vejo os documentos que preciso aprovar?
-Acesse Financeiro → Documentos. A aba "Pendentes" mostra todos aguardando sua ação.
-
-### Como filtro por data de vencimento?
-Use o chip "Vencimento" na barra de filtros para selecionar um período.
-
-### O que é "R. Vencimento"?
-É o vencimento real — pode diferir do vencimento original quando há renegociação ou prorrogação.
-
-### Posso aprovar um documento sem anexo?
-Sim, desde que o fiscal já tenha aprovado. Mas é recomendável verificar se o comprovante está anexado.
-
-### Qual a diferença entre A Pagar e Documentos?
-**Documentos** vêm do Protheus (pedidos de compra). **A Pagar** são lançamentos avulsos criados manualmente no Apollo.
-
----
-
-## Glossário
-
-- **Documentos:** títulos financeiros originados de pedidos de compra no Protheus
-- **A Pagar:** documentos avulsos com obrigação de pagamento
-- **A Receber:** documentos avulsos com direito a recebimento
-- **Parcela:** número da parcela do documento (quando parcelado)
-- **R. Vencimento:** vencimento real (pode diferir do original)
-- **Aprovador:** usuário que aprovou o documento no financeiro
-
----
-
-**Última atualização:** Junho 2026
-**Versão do documento:** 1.0
+## Problemas comuns
+- **"Observação: *" em vermelho ao reprovar**: a observação é obrigatória para reprovar. Escreva o motivo.
+- **O título não aparece em Financeiro › Documentos**: ele só é criado quando o Fiscal aprova o pedido. Se o título foi excluído no Protheus, ele some do Apollo na próxima sincronização e o pedido volta a ficar pendente no financeiro.
+- **A tela diz que você não tem permissão**: peça ao administrador da sua empresa para liberar o acesso ao Financeiro.

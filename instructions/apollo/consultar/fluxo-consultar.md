@@ -1,87 +1,44 @@
 # Consultar - Apollo
 
-## Visão Geral
+Atualizado em 03/11/2026
 
-O módulo **Consultar** (`/consultar`) é uma ferramenta de **pesquisa avançada** que permite buscar documentos, pedidos de compra e registros financeiros em um único lugar, sem precisar navegar por cada módulo individualmente.
+## O que é
+O menu **"Consultar"** ("Pesquise documentos, pedidos e registros financeiros") é uma tela **só de consulta**: permite achar documentos, pedidos e títulos sem entrar em cada módulo. Não aprova, não edita e não exporta.
 
----
+## Abas
+**Empresas com Protheus:**
+- **"Documentos"**: documentos avulsos (A pagar, provisões, taxas, guias) em qualquer status.
+- **"Pedidos"**: pedidos de compra vindos do Protheus.
+- **"Documentos no financeiro"**: títulos que já chegaram ao Financeiro depois da aprovação do Fiscal.
 
-## Abas disponíveis
+Cada aba só fica habilitada para quem tem a permissão correspondente.
 
-O acesso às abas depende dos módulos e permissões do usuário:
+**Empresas na nuvem:** só a aba **"Documentos"** (contas a pagar e a receber).
 
-### Aba 1 — Documentos
-Busca de **documentos avulsos** (A Pagar, A Receber e outros tipos). Equivale a uma visão centralizada de `Documentos Avulsos`, mas com filtros de pesquisa avançada.
+## Como pesquisar
+1. Menu "Consultar" › escolha a aba.
+2. Use as abas de status ("Todos", "Pendentes", "Rejeitados", "Finalizados", "Parcial", conforme a aba).
+3. Para filtrar por período ("Data inicial"/"Data final") ou filial/espécie, abra a **"Busca Avançada"**.
 
-**Permissão necessária:** `SEARCH_SINGLE_DOCUMENTS`
+Os resultados aparecem na tabela; não há tela de detalhe. Para agir sobre um item (aprovar, anexar, reenviar), vá ao módulo dele (Documentos, Fiscal ou Financeiro).
 
-### Aba 2 — Pedidos
-Busca de **pedidos de compra** sincronizados do Protheus.
+## Quem pode
+O administrador da empresa libera em Configuração › Usuários:
+- Aba Documentos: SEARCH_SINGLE_DOCUMENTS
+- Aba Pedidos: SEARCH_PURCHASE_ORDER
+- Aba Documentos no financeiro: SEARCH_FINANCIAL
+- Acesso básico ao menu: SEARCH_BASIC (ou perfis de administrador)
 
-**Permissão necessária:** `SEARCH_PURCHASE_ORDER`
+## Perguntas frequentes
 
-Disponível apenas para usuários com o módulo Protheus habilitado.
+**Não consigo abrir a aba "Pedidos". Por quê?**
+Ela só existe em empresas com Protheus e exige a permissão de consultar pedidos. Peça ao administrador da sua empresa.
 
-### Aba 3 — Documentos no Financeiro
-Busca de **documentos financeiros** — os títulos que chegaram ao módulo Financeiro (aprovados pelo fiscal).
+**Qual a diferença entre "Documentos" e "Documentos no financeiro"?**
+"Documentos" mostra os documentos avulsos em qualquer etapa. "Documentos no financeiro" mostra os títulos que o Fiscal já aprovou e estão no Financeiro.
 
-**Permissão necessária:** `SEARCH_FINANCIAL`
+**Dá para exportar daqui?**
+Não. Use a exportação do módulo do documento (por exemplo, Financeiro › A pagar › "Exportar") ou o menu Relatórios.
 
----
-
-## Comportamento por perfil
-
-| Perfil | Abas visíveis |
-|--------|--------------|
-| Usuário com módulo Protheus | Documentos + Pedidos + Documentos no Financeiro |
-| Usuário sem módulo Protheus | Apenas Documentos (documentos avulsos) |
-
----
-
-## Quando usar
-
-- Encontrar um documento específico sem saber em qual módulo ele está
-- Pesquisar pedido de compra por número ou fornecedor
-- Verificar se um documento já chegou ao financeiro
-- Consulta rápida sem precisar navegar por Fiscal → Financeiro → Documentos
-
----
-
-## Fluxo de uso
-
-```
-[Usuário acessa /consultar]
-        ↓
-Seleciona a aba: Documentos / Pedidos / Documentos no Financeiro
-        ↓
-Aplica filtros de busca (número, período, fornecedor, status...)
-        ↓
-Visualiza resultado e clica para ver detalhes
-```
-
----
-
-## Perguntas Frequentes
-
-### Não consigo ver a aba "Pedidos". Por quê?
-A aba só aparece se o módulo Protheus estiver habilitado para o seu perfil e se você tiver a permissão `SEARCH_PURCHASE_ORDER`. Contate o administrador.
-
-### Qual a diferença entre "Documentos" e "Documentos no Financeiro"?
-"Documentos" são os avulsos (A Pagar, A Receber) em qualquer status. "Documentos no Financeiro" são os títulos que passaram pelo fiscal e chegaram para aprovação do financeiro.
-
-### Posso usar o Consultar para exportar dados?
-Não diretamente. Use os módulos específicos (Financeiro, Fiscal, Documentos) ou o módulo Relatórios para exportação.
-
----
-
-## Glossário
-
-- **Documentos avulsos:** lançamentos manuais sem vínculo com Protheus (A Pagar, A Receber)
-- **Pedidos de compra:** pedidos sincronizados do Protheus
-- **Documentos financeiros:** títulos que chegaram ao módulo Financeiro após aprovação fiscal
-- **Módulo Protheus:** integração com o ERP Protheus da TOTVS
-
----
-
-**Última atualização:** Junho 2026
-**Versão do documento:** 1.0
+**Dá para clicar e ver os detalhes do item?**
+Não, a tela é só de consulta. Abra o item no módulo de origem.

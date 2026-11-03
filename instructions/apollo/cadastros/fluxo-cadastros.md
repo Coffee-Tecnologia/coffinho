@@ -1,153 +1,69 @@
-# Cadastros - Apollo
+# Cadastros — Apollo
+Atualizado em 03/11/2026
 
-## Visão Geral
-O módulo **Cadastros** centraliza os registros base do sistema: clientes, fornecedores, produtos, serviços e suas categorias. Esses cadastros são utilizados por outros módulos (orçamentos, pedidos, caixinha, etc.).
+Menu **Cadastros**: os registros base usados pelos outros módulos (Orçamentos, Documentos, Caixinha).
 
----
+Itens do menu:
+- **Clientes**
+- **Fornecedores**
+- **Produtos** › "Produtos", "Categorias de Produto", "Unidades de Medida"
+- **Categorias de Serviço**
+- **Serviços**
+- **Contextos**
 
-## 1. Clientes (`/cadastros/clientes`)
+As telas têm busca, filtros (abas Todos / Ativo / Inativo na maioria), "Exportar" (PDF ou XLS) e o menu de linha com "Editar" e "Excluir"/"Deletar".
 
-Cadastro de clientes da empresa para uso em orçamentos e documentos a receber.
+## Clientes
+Cadastros › Clientes › "Criar cliente".
+- Campos: "Tipo *" (Pessoa Física/Jurídica), "CPF/CNPJ", "Loja *", "Código", "Inscrição Estadual", "E-mail", "Telefone / WhatsApp", "Contato" e o endereço (CEP, Logradouro, Número, Bairro, Cidade/UF).
+- Ao digitar o CNPJ, o Apollo consulta os dados da empresa e preenche o formulário automaticamente.
+- O cliente é obrigatório nos Orçamentos e nos documentos "A receber" (nuvem).
 
-### Campos principais
-- Razão Social / Nome
-- CPF ou CNPJ
-- E-mail, telefone
-- Endereço completo
-- Observações
+## Fornecedores
+Cadastros › Fornecedores › "Criar fornecedor". Os campos são parecidos com os de Clientes ("Tipo *", "CPF/CNPJ", "Loja *", "Código", "E-mail").
+- Em empresa com Protheus, a lista também mostra os fornecedores do Protheus.
+- Situação cadastral e risco dos fornecedores ficam em outro lugar: Gestão Fiscal › Monitoramento › Fornecedores (ver doc de Gestão Fiscal).
 
-### Uso
-- Vinculado obrigatoriamente aos **Orçamentos**
-- Referenciado em documentos **A Receber**
+## Produtos
+Cadastros › Produtos › Produtos › "Criar Produto".
+- Campos: "Código*" (sugerido automaticamente), "Descrição*", "Preço*", "Categoria" e "Unidade de Medida*".
+- Dados fiscais opcionais: NCM, CFOP, CST, ICMS (%), PIS, COFINS e ST.
+- **Unidade de medida é obrigatória.** Se a unidade desejada não aparecer na lista, ela está inativa: ative em Unidades de Medida.
 
----
+## Unidades de Medida
+Cadastros › Produtos › Unidades de Medida.
+- É um catálogo padrão do mercado (Nome, Abreviação, Tipo). O usuário só **ativa ou desativa** unidades; não há botão para criar.
+- Unidade nova só pela equipe Coffee, via suporte.
 
-## 2. Fornecedores (`/cadastros/fornecedores`)
+## Categorias (de Produto e de Serviço)
+Cadastros › Produtos › Categorias de Produto ou Cadastros › Categorias de Serviço › "Criar Categoria". Campos: "Nome*" e "Descrição". A categoria é opcional, mas ajuda na busca.
 
-Cadastro de fornecedores da empresa para uso em pedidos de compra, documentos avulsos e caixinha.
+## Serviços
+Cadastros › Serviços › "Criar Serviço". O formulário é dividido em seções (Geral, Comercial, Fiscal, Planejamento e Materiais):
+- **Geral / Comercial:** "Código do Serviço*", "Descrição Comercial*", "Família / Categoria", "Unidade de Medida", "Preço Base de Venda".
+- **Fiscal** (usado na NFS-e): "Item LC 116", "NBS", "CNAE vinculado", "Alíquota ISS (%)".
+- **Planejamento e Materiais:** "Tempo estimado de execução (h)", "Tipo de mão de obra" e a lista de materiais ("Adicionar Material": produto + quantidade).
+- Materiais no orçamento: ao adicionar o serviço, o Apollo pergunta se quer incluir os materiais vinculados. Se o usuário aceitar, eles entram como **itens separados** (quantidade do material × quantidade do serviço). O custo não é somado ao preço do serviço.
 
-### Campos principais
-- Razão Social / Nome Fantasia
-- CNPJ / CPF
-- E-mail, telefone
-- Endereço
-- Observações
+## Contextos
+Cadastros › Contextos › "Criar Contexto".
+- Contextos são **obras ou projetos** usados para separar documentos.
+- Campos: "Nome*", "CNO" (cadastro de obra) e "Observação". Podem ser ativados e inativados.
+- O campo "Contexto" aparece nos documentos quando o parâmetro "Usar Contexto" está ligado (Configuração › Sistema › Parâmetros do Sistema).
 
-### Uso
-- Referenciado em títulos de **Caixinha**
-- Referenciado em **Documentos Avulsos**
-- Disponível para consulta em **Pedidos de Compra**
+## Quem pode
+- Clientes: CLIENT. Fornecedores: PROVIDER ou LITTLE_BOX. Produtos, Serviços, Categorias e Unidades: PRODUCT. Contextos: ENTITY.
+- Os administradores da empresa (ADMIN_BASIC) acessam tudo.
+- Sem o item no menu, peça acesso ao administrador da sua empresa.
 
----
+## Perguntas frequentes
+- **Como cadastro um fornecedor?** Cadastros › Fornecedores › "Criar fornecedor", preencha e salve.
+- **Como coloco materiais num serviço?** Edite o serviço › aba "Planejamento e Materiais" › "Adicionar Material".
+- **Excluí um cadastro que estava em uso; os documentos antigos somem?** Não. A exclusão só tira o cadastro das listas, e os documentos antigos continuam com os dados. Se pode voltar a usar, prefira inativar.
+- **Posso criar uma unidade de medida?** Não. Ative uma do catálogo ou peça ao suporte.
+- **Para que serve Contexto?** Para separar documentos por obra ou projeto.
 
-## 3. Produtos (`/cadastros/produtos`)
-
-Catálogo de produtos da empresa, utilizados principalmente nos **Orçamentos**.
-
-### Campos principais
-- Descrição do produto
-- Preço unitário
-- Categoria do produto
-- Código interno
-
-### Funcionalidades
-- Busca e filtro por nome/categoria
-- Exportação da lista de produtos
-- Visualização em lista ou cards
-
-### Uso
-- Itens de **Orçamentos** (tipo produto)
-
----
-
-## 4. Serviços (`/cadastros/servicos`)
-
-Catálogo de serviços oferecidos pela empresa, utilizados nos **Orçamentos**.
-
-### Campos principais
-- Descrição do serviço
-- Preço unitário
-- Categoria do serviço
-- Materiais vinculados (insumos do serviço com quantidade e produto)
-
-### Materiais vinculados
-Cada serviço pode ter uma lista de materiais/insumos. Quando um serviço é adicionado a um orçamento com a opção "Incluir materiais" ativada, o custo dos materiais é somado automaticamente ao valor do item.
-
-### Uso
-- Itens de **Orçamentos** (tipo serviço)
-
----
-
-## 5. Categorias de Produto (`/cadastros/categorias-produto`)
-
-Agrupamento de produtos por categoria para facilitar navegação e relatórios.
-
-**Exemplos:** Materiais, Equipamentos, Insumos, etc.
-
----
-
-## 6. Categorias de Serviço (`/cadastros/categorias-servico`)
-
-Agrupamento de serviços por categoria.
-
-**Exemplos:** Manutenção, Consultoria, Instalação, etc.
-
----
-
-## 7. Contextos (`/cadastros/contextos`)
-
-Configuração de contextos de negócio — agrupamentos ou segmentos que organizam a operação da empresa dentro do Apollo. Usado para segmentar permissões e visualizações por área/unidade.
-
----
-
-## Regras de Negócio
-
-### 1. Produto vs. Serviço
-- **Produto:** item físico com preço unitário
-- **Serviço:** prestação com preço e opcionalmente materiais inclusos
-- Ambos podem coexistir em um mesmo orçamento
-
-### 2. Materiais de Serviço
-- ✅ Um serviço pode ter N materiais (produtos) vinculados com quantidade
-- ✅ O custo dos materiais é somado ao orçamento quando "Incluir materiais" está ativo
-- ✅ Atualizar o preço do produto reflete automaticamente no cálculo
-
-### 3. Exclusão de Cadastros
-- ⚠️ Não é possível excluir clientes, fornecedores, produtos ou serviços que estejam vinculados a documentos ativos
-- ✅ Inativação é a alternativa para cadastros em uso
-
----
-
-## Perguntas Frequentes
-
-### Como cadastro um novo fornecedor?
-Acesse Cadastros → Fornecedores → Novo. Preencha os dados e salve.
-
-### Como adiciono materiais a um serviço?
-Acesse Cadastros → Serviços → edite o serviço desejado. Na seção "Materiais", adicione os produtos e quantidades.
-
-### Por que não consigo excluir um produto?
-Provavelmente ele está vinculado a um orçamento ativo ou a materiais de algum serviço. Inative o produto em vez de excluir.
-
-### A categoria é obrigatória?
-Não, mas é recomendável para facilitar buscas e relatórios.
-
-### Onde uso o cadastro de contextos?
-Contextos organizam a operação por área ou unidade de negócio. Consulte o administrador do sistema para entender como sua empresa usa esse recurso.
-
----
-
-## Glossário
-
-- **Cliente:** empresa ou pessoa que compra ou recebe serviços
-- **Fornecedor:** empresa ou pessoa que vende ou presta serviços para a empresa
-- **Produto:** item físico do catálogo com preço unitário
-- **Serviço:** prestação do catálogo com preço unitário e possíveis materiais
-- **Materiais vinculados:** insumos associados a um serviço, com produto e quantidade
-- **Categoria:** agrupamento de produtos ou serviços para organização
-- **Contexto:** segmento ou unidade de negócio dentro do Apollo
-
----
-
-**Última atualização:** Junho 2026
-**Versão do documento:** 1.0
+## Problemas comuns
+- "Não foi possível salvar o cliente. Tente novamente." / "Não foi possível salvar o fornecedor. Tente novamente.": confira os campos obrigatórios (Tipo, CPF/CNPJ, Loja) e se o documento já não está cadastrado.
+- A unidade de medida não aparece no produto: ela está inativa em Unidades de Medida.
+- "Erro ao gerar relatório!" ao exportar: tente de novo com menos filtros. Se persistir, acione o suporte.

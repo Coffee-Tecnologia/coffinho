@@ -1,194 +1,89 @@
-# Caixinha (Fundo Fixo) - Apollo
+# Caixinha (fundo fixo) - Apollo
 
-## Visão Geral
-A **Caixinha** é o módulo de fundo fixo/petty cash do Apollo. Permite que colaboradores registrem pequenas despesas do dia a dia vinculadas a uma caixinha específica (identificada por sigla e nome), com aprovação e prestação de contas periódica.
+Atualizado em 03/11/2026
 
-O módulo é composto por três camadas:
-- **Caixinha (LittleBox):** o fundo em si, com saldo e responsáveis
-- **Título (LittleBoxTitle):** cada despesa individual lançada
-- **Resumo / Prestação de contas (LittleBoxSummary):** fechamento periódico que agrupa os títulos
+A **Caixinha** é o fundo para pequenas despesas. A pessoa lança o gasto, a **Central de Serviço** aprova e dá a baixa, e de tempos em tempos a Central fecha a caixinha. O fechamento gera um **resumo** (prestação de contas), que passa pelo gestor, pelo Fiscal e pelo Financeiro.
 
----
+Menu: **Documentos › Caixinha › Manutenção | Movimentos | Resumos**. Depois vêm as etapas em **Fiscal › Caixinha** e **Financeiro › Caixinha**.
 
-## 1. Cadastro da Caixinha
-
-**Responsável:** Administrador / Gestor
-
-Cada caixinha possui:
-- **Nome:** nome descritivo (ex.: "Caixinha RH")
-- **Sigla (Acronym):** código único de identificação
-- **Saldo (amount):** valor disponível atual
-- **Aprovadores:** usuários autorizados a aprovar títulos desta caixinha
-
-**Ações disponíveis:**
-- Criar nova caixinha
-- Editar nome/sigla
-- Adicionar ou remover aprovadores
-- Adicionar saldo (reposição de fundo)
-- Excluir caixinha
+O fluxo é parecido nos dois modos, com estas diferenças:
+- **Na nuvem**: a caixinha tem saldo no Apollo. Aprovar um título debita o saldo. Não existe estorno.
+- **Em empresas com Protheus**: o título aprovado é gravado no Protheus e recebe um "Num Doc". O estorno é possível. O saldo não é controlado pelo Apollo.
 
 ---
 
-## 2. Lançamento de Título (Despesa)
+## Como cadastrar uma caixinha e dar acesso (Manutenção)
+Só administradores da empresa veem Documentos › Caixinha › Manutenção.
+1. Clique em "Nova caixinha" e informe "Nome" e "Sigla". A sigla diferencia caixinhas com o mesmo nome.
+2. Para dar acesso, clique em "Adicionar aprovador". O assistente tem 3 passos: **Usuário → Caixinhas → Permissões**.
+   - "Visualizar movimentos" está sempre incluído.
+   - Ligue "Aprovar movimentos" para a pessoa poder dar baixa e aprovar lançamentos.
+   - Se a pessoa já tinha acesso, o novo acesso substitui o anterior.
+3. Os cards do topo mostram "Caixinhas", "Com aprovador", "Sem aprovador" e "Usuários". Uma caixinha "Sem aprovador" não tem ninguém que possa aprovar.
+4. Em cada caixinha há os ícones "Editar caixinha", "Excluir caixinha" e, **só na nuvem**, "Adicionar saldo" (reposição do fundo).
 
-**Responsável:** Colaborador / Solicitante
+## Como lançar uma despesa (Movimentos)
+1. Acesse **Documentos › Caixinha › Movimentos** e clique em "Novo".
+2. Preencha "Filial", "Número", "Emissão", "Caixinha", "Fornecedor", "Vencimento" e "Valor". Todos são obrigatórios. A "Observação" é opcional.
+3. Clique em "Salvar". O título fica "Pendente".
+4. Anexe o comprovante na coluna "Anexo".
+5. No menu da linha, clique em **"Enviar"**. O botão só habilita depois que houver anexo. Só depois do envio o título chega à Central de Serviço.
 
-O colaborador registra uma despesa informando:
-- **Valor total**
-- **Fornecedor**
-- **Natureza** (categoria da despesa)
-- **Classe de valor**
-- **Centro de custo**
-- **Data de emissão e vencimento**
-- **Filial**
-- **Número do documento**
-- **Observação**
-- **Anexos** (notas, comprovantes)
+Natureza, Centro de custo e Classe de valor **não** são preenchidos por quem lança. Quem preenche é a Central de Serviço, na aprovação (só no Protheus).
 
-Após salvar, o título entra com **status: `pending`** e aguarda aprovação.
+## Como aprovar, rejeitar ou estornar um título (Central de Serviço)
+Em Movimentos, a Central de Serviço tem as abas extras "Ag. baixa", "Ag. resumo" e "Resumo rej.". No menu da linha:
+- **"Aprovar"**: aprova e dá a baixa.
+  - No Protheus, informe "Natureza", "Centro de custo" e "Classe de valor". O título é gravado no Protheus e ganha o "Num Doc".
+  - Na nuvem, o valor é debitado do saldo da caixinha.
+- **"Rejeitar"**: a "Observação" é obrigatória. O título volta para quem lançou, que corrige e envia de novo.
+- **"Estornar"**: desfaz a baixa. Só existe no Protheus (precisa do "Num Doc") e só para título fora de resumo, ou num resumo rejeitado.
+- **"Retornar ao resumo"**: devolve ao resumo um título que estava num resumo rejeitado.
 
----
+## Como fechar a caixinha (gerar o resumo)
+1. Em **Documentos › Caixinha › Movimentos**, a Central de Serviço clica em **"Fechar Caixinha"**.
+2. Informe a "Caixinha" e a "Data do fechamento" e confirme.
+3. O Apollo junta **todos os títulos finalizados até essa data** num resumo, com status "Aguardando Central de serviços". Não é preciso escolher os títulos um a um.
 
-## 3. Aprovação do Título
+## Como aprovar o resumo (prestação de contas)
+O resumo passa por quatro aprovações, nesta ordem:
 
-**Responsável:** Aprovador da caixinha
+| Status | Quem aprova | Onde |
+|---|---|---|
+| Aguardando Central de serviços | Central de Serviço | Documentos › Caixinha › Resumos |
+| Aguardando gestor | Gestor (aprovador da caixinha) | Documentos › Caixinha › Resumos |
+| Aguardando fiscal | Fiscal | Fiscal › Caixinha |
+| Aguardando financeiro | Financeiro | Financeiro › Caixinha |
+| Finalizado | Fim do fluxo | |
 
-O aprovador analisa o título e pode:
+Em cada tela, o menu da linha tem "Detalhes", "Historico", "Aprovar" e "Reprovar". Reprovar deixa o resumo "Rejeitado". Em Documentos › Caixinha › Resumos, aprovar um resumo rejeitado o manda de novo para o gestor.
 
-### Opção A: Aprovar e Baixar
-- Título vai a **status: `finished`**
-- Pode informar número de baixa e data de baixa
-- Saldo da caixinha é debitado automaticamente
-
-### Opção B: Rejeitar
-- Título vai a **status: `rejected`**
-- É obrigatório informar observação
-
-### Opção C: Enviar para Central de Serviços
-- Título segue para análise de outro setor
-- `centralServiceStatus` é preenchido pela central
-- Pode ser rejeitado pela central também (`rejectSingleDocumentOnCentralService`)
-
----
-
-## 4. Cancelamento de Baixa
-
-O aprovador pode cancelar uma baixa já efetuada, devolvendo o título a um estado pendente. Requer observação obrigatória.
-
----
-
-## 5. Fechamento (Prestação de Contas)
-
-**Responsável:** Responsável pela caixinha
-
-Periodicamente a caixinha é fechada via **Resumo**:
-1. Seleciona os títulos do período
-2. Define a data de fechamento
-3. Aciona **"Fechar caixinha"** (`POST /little-box-summary/close`)
-
-O resumo criado agrupa todos os títulos do período e segue o fluxo de aprovação por setores.
+## Saldo negativo (só na nuvem)
+Por padrão, a Central de Serviço não consegue aprovar um título maior que o saldo da caixinha. Se a empresa quiser permitir, o administrador pode ligar o parâmetro **"Permitir Saldo Negativo na Caixinha"** em Configuração › Sistema › Parâmetros do Sistema.
 
 ---
 
-## 6. Fluxo de Aprovação do Resumo
+## Quem pode
+- Manutenção: administradores da empresa (ADMIN_BASIC, ADMIN_PROTHEUS).
+- Lançar e enviar: permissão LITTLE_BOX (ou AREA_MANAGER).
+- Aprovar títulos e fechar a caixinha: Central de Serviço (permissão CS).
+- Resumos: Central de Serviço e gestor. Fiscal › Caixinha: ACCOUNTABILITY ou LITTLE_BOX_BILLING. Financeiro › Caixinha: FINANCIAL ou FINANCIAL_LITTLE_BOX.
 
-O `LittleBoxSummary` percorre os seguintes status:
+## Perguntas frequentes
+**Lancei a despesa, mas ninguém aprova.** Confira se você clicou em "Enviar" (com anexo). Um título só salvo fica "Pendente" e a Central não o recebe.
 
-| Status | Descrição |
-|--------|-----------|
-| `WAITING_CENTRAL_SERVICE` | Aguardando análise da central de serviços |
-| `WAITING_MANAGER` | Aguardando aprovação do gestor |
-| `WAITING_BILLING` | Aguardando aprovação do fiscal/contábil |
-| `WAITING_FINANCIAL` | Aguardando aprovação do financeiro |
-| `REJECTED` | Resumo reprovado em alguma etapa |
-| `COMPLETED` | Prestação de contas finalizada |
+**Onde fica o botão "Fechar Caixinha"?** Em Movimentos, no cabeçalho, e só para a Central de Serviço. Não fica em Resumos.
 
-Cada transição de status é registrada no histórico (`LittleBoxSummaryHistory`), com data, usuário e observação.
+**Como cancelo uma baixa?** Com "Estornar", na Central de Serviço, só em empresas com Protheus. Na nuvem não há estorno.
 
----
+**Como recarrego o saldo?** Em Manutenção, pelo ícone "Adicionar saldo" (só na nuvem).
 
-## Fluxograma Resumido
+**Quem é o "gestor"?** É o usuário com acesso "Aprovar movimentos" na caixinha, definido em Manutenção.
 
-```
-[Colaborador] Lança título (despesa)
-    ↓ status: pending
-[Aprovador] Analisa título
-    ↓
-    ├─→ APROVADO → status: finished → Saldo debitado
-    │
-    └─→ REJEITADO → status: rejected → Volta ao colaborador
-
-[Responsável] Fecha caixinha (Resumo)
-    ↓ WAITING_CENTRAL_SERVICE
-    ↓ WAITING_MANAGER
-    ↓ WAITING_BILLING
-    ↓ WAITING_FINANCIAL
-    ↓ COMPLETED ✅
-```
-
----
-
-## Status dos Títulos
-
-| Status | Descrição |
-|--------|-----------|
-| `pending` | Lançado, aguardando aprovação |
-| `finished` | Aprovado e baixado |
-| `rejected` | Reprovado pelo aprovador ou central de serviços |
-
----
-
-## Regras de Negócio Importantes
-
-### 1. Aprovadores
-- ✅ Cada caixinha tem sua lista própria de aprovadores
-- ❌ Usuário sem permissão não pode aprovar
-
-### 2. Saldo
-- ✅ Ao aprovar e baixar, o saldo da caixinha é reduzido
-- ✅ Gestor pode repor saldo via "Adicionar Saldo"
-- ❌ Não é possível lançar despesa em caixinha inativa
-
-### 3. Anexos
-- ✅ Títulos suportam upload de arquivos (comprovantes, notas)
-- ✅ Resumos também suportam anexos
-
-### 4. Histórico
-- ✅ Toda movimentação do resumo é registrada com data, usuário e observação
-
----
-
-## Perguntas Frequentes
-
-### Como registro uma despesa na caixinha?
-Acesse o módulo Caixinha, selecione a caixinha correspondente e clique em "Novo Título". Preencha os dados da despesa e salve. O título ficará aguardando aprovação.
-
-### Meu título foi rejeitado. O que faço?
-Verifique a observação do aprovador, corrija o problema (ex.: anexar comprovante correto) e reenvie.
-
-### Como faço o fechamento da caixinha?
-Acesse "Resumos", selecione o período, verifique os títulos incluídos e clique em "Fechar Caixinha". O resumo seguirá para aprovação por setores.
-
-### O saldo da caixinha está incorreto. O que fazer?
-O gestor pode acionar "Recalcular" ou "Adicionar Saldo" para corrigir. Verifique os títulos baixados do período.
-
-### Posso cancelar uma baixa já efetuada?
-Sim, desde que você tenha permissão de aprovador. Acesse o título, clique em "Cancelar Baixa" e informe uma observação.
-
----
-
-## Glossário
-
-- **Caixinha (LittleBox):** fundo fixo/petty cash identificado por sigla
-- **Título (LittleBoxTitle):** lançamento individual de despesa
-- **Resumo (LittleBoxSummary):** fechamento periódico agrupando títulos
-- **Aprovador:** usuário autorizado a aprovar títulos de uma caixinha específica
-- **Baixa:** confirmação de pagamento/aprovação do título
-- **Prestação de contas:** processo de fechar e submeter o resumo para aprovação hierárquica
-- **Natureza:** categoria/tipo da despesa
-- **Centro de custo:** departamento ou área responsável pela despesa
-
----
-
-**Última atualização:** Junho 2026
-**Versão do documento:** 1.0
+## Problemas comuns
+- **"Documento sem anexo."**: anexe o comprovante antes de enviar.
+- **"Caixinha sem saldo para realizar a movimentação: SIGLA"** (nuvem): reponha o saldo com "Adicionar saldo", ou peça ao administrador para ligar "Permitir Saldo Negativo na Caixinha".
+- **"Não é possível realizar o fechamento por falta de títulos para os filtros selecionados."**: não há títulos finalizados até a data informada nessa caixinha.
+- **"Erro ao atualizar o titulo, verifique se o titulo esta aprovado e não pertence a um resumo."**: o título já está num resumo em andamento. Só dá para estorná-lo se o resumo for rejeitado.
+- **"Você não tem permissão para deletar esse titulo."**: só quem lançou pode excluir.
+- **"O usuário não tem permissão para esta ação."**: peça ao administrador da sua empresa para revisar seu acesso em Manutenção.
